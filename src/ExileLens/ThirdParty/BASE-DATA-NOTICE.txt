@@ -1,0 +1,9 @@
+The bundled base-name catalogue is extracted from the trade-item fixture in:
+https://github.com/Kvan7/Exiled-Exchange-2
+renderer/specs/data/items.json
+Reference revision: cca30662bf31eaf38bd711e2ec1a6b899a06c40e
+
+See Exiled-Exchange-2-LICENSE.txt for the project's MIT license.
+Only distinct base type strings are retained. Name resolution code is an
+independent implementation. The catalogue is a bundled snapshot, not a live
+source; unknown or ambiguous magic names remain unresolved.

@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+**/artifacts/
+references/
+.impeccable/
+.env
+.env.*
+*.pfx
+*.pem
+.vs/
+*.user

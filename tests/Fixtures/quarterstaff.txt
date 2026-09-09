@@ -1,0 +1,30 @@
+Item Class: Quarterstaves
+Rarity: Rare
+Maelström Song
+Lunar Quarterstaff
+--------
+Physical Damage: 85-174 (augmented)
+Elemental Damage: 42-61 (fire), 1-30 (lightning)
+Critical Hit Chance: 11.17% (augmented)
+Attacks per Second: 1.86 (augmented)
+Requires: Level 72, 115 Dex, 46 Int
+Sockets: S S
+Item Level: 82
+--------
+Adds 1 to 30 Lightning Damage (rune)
+Attacks with this Weapon Penetrate 25% Elemental Resistances (rune)
+--------
+{ Prefix Modifier "Devastating" (Tier: 1) — Damage, Elemental, Fire, Cold,
+Lightning }
+123(120-139)% increased Elemental Damage with Attacks
+{ Prefix Modifier "Scorching" (Tier: 5) — Damage, Elemental, Fire, Attack }
+Adds 42(39-53) to 61(59-80) Fire Damage
+{ Prefix Modifier "Emperor's" (Tier: 3) — Damage, Physical, Attack }
+69(65-74)% increased Physical Damage
++172(150-174) to Accuracy Rating
+{ Suffix Modifier "of Battle" (Tier: 2) — Attack }
++4 to Level of all Melee Skills
+{ Desecrated Suffix Modifier "of Menace" (Tier: 6) — Attack, Critical }
++1.17(1.01-1.5)% to Critical Hit Chance
+{ Crafted Suffix Modifier "of Infamy" (Tier: 2) — Attack, Speed }
+24(23-25)% increased Attack Speed

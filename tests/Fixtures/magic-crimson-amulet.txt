@@ -1,0 +1,12 @@
+Item Class: Amulets
+Rarity: Magic
+Glimmering Crimson Amulet of the Universe
+--------
+Requires: Level 52
+--------
+Item Level: 77
+--------
+3.8 Life Regeneration per second (implicit)
+--------
++17 to maximum Energy Shield
++20 to all Attributes
