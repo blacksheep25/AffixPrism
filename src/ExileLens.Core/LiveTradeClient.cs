@@ -186,6 +186,7 @@ public sealed class LiveTradeClient(HttpClient http)
         if (request.Currency != "Auto") trade["price"] = new { option = CurrencyId(request.Currency) };
         if (request.MaximumAgeDays is { } days) trade["indexed"] = new { option = days switch { 1 => "1day", 3 => "3days", 7 => "1week", _ => throw new ArgumentException("Unsupported listing age.") } };
         var stats = new List<object>();
+        var alternatives = new List<object>();
         foreach (var group in request.Filters.GroupBy(x => (x.GroupId, x.Text, x.Kind)))
         {
             var first = group.First();
@@ -218,14 +219,19 @@ public sealed class LiveTradeClient(HttpClient http)
             var candidates = catalog?.GetProperty("result").EnumerateArray().SelectMany(x => x.GetProperty("entries").EnumerateArray())
                 .Where(x => ReadText(x.GetProperty("id"), "stats.entries.id").StartsWith(kind + ".", StringComparison.Ordinal) && !x.TryGetProperty("option", out _) && Signature(ReadText(x.GetProperty("text"), "stats.entries.text")) == Signature(first.Text))
                 .Select(x => ReadText(x.GetProperty("id"), "stats.entries.id")).Distinct().ToArray() ?? [];
-            if (candidates.Length != 1) throw new ArgumentException($"Cannot map this selected filter to a unique trade stat: {first.Text}. Deselect it to search more broadly.");
+            if (candidates.Length == 0) throw new ArgumentException($"Cannot map this selected filter to a trade stat: {first.Text}. Deselect it to search more broadly.");
             // The trade site uses one magnitude for multi-number stats; enforce individual values locally.
             bool single = Regex.Matches(first.Text, @"(?<![\d.])[+-]?\d+(?:\.\d+)?").Count == 1 && first.ValueIndex == 0;
-            stats.Add(new { id = candidates[0], value = single ? range : new Dictionary<string, decimal>() });
+            if(candidates.Length==1) stats.Add(new { id = candidates[0], value = single ? range : new Dictionary<string, decimal>() });
+            else
+                // Identical text can have separate IDs for different item contexts (e.g. Spirit).
+                // Require at least one matching ID at the same bounds, not all IDs or a guessed one.
+                alternatives.Add(new { type="count", value=new { min=1 }, filters=candidates.Select(id=>new { id, value=single ? range : new Dictionary<string,decimal>() }).ToArray() });
         }
         var filters = new Dictionary<string, object> { ["type_filters"] = new { filters = type }, ["misc_filters"] = new { filters = misc }, ["trade_filters"] = new { filters = trade } };
         if (equipment.Count > 0) filters["equipment_filters"] = new { filters = equipment };
-        var query = new Dictionary<string, object> { ["status"] = new { option = request.InstantBuyOnly ? "securable" : request.OnlineOnly ? "online" : "any" }, ["filters"] = filters, ["stats"] = new[] { new { type = "and", filters = stats } } };
+        var statGroups=new List<object> { new { type="and", filters=stats } }; statGroups.AddRange(alternatives);
+        var query = new Dictionary<string, object> { ["status"] = new { option = request.InstantBuyOnly ? "securable" : request.OnlineOnly ? "online" : "any" }, ["filters"] = filters, ["stats"] = statGroups };
         if (request.ExactBase) query["type"] = request.Item.BaseType;
         if (request.Item.Rarity == "Unique" && !analysis.Unidentified) query["name"] = request.Item.Name;
         return JsonSerializer.Serialize(new { query, sort = new { price = "asc" } });

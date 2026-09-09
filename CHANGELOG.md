@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0-beta.2 — 2026-09-09
+
+- Fixed Spirit and other identical-text modifiers being rejected when the trade catalogue contains multiple IDs. Searches require at least one matching ID, with the selected min/max bounds and all other filters preserved.
+- Added regression checks for the reported Bloodstone Amulet, including rejection of listings below 50 Spirit.
+- 235 core checks pass. Live trade connectivity could not be retested on the development host; the catalogue case was verified against the retained reference snapshot.
+
+
 ## 0.4.0-beta.1 — 2026-09-09
 
 First downloadable Windows x64 beta. Includes the existing item evaluator, comparisons, bookmarks, profiles, Logbook guides, rune choice helper and desktop QOL features.

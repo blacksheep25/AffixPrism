@@ -55,6 +55,16 @@ static class ReliabilityChecks
             try {await new LiveTradeClient(http).SearchAsync(request,CancellationToken.None);} catch(JsonException ex){rejected=ex.Message.Contains("Trade",StringComparison.OrdinalIgnoreCase);}
             check(rejected && handler.Calls==1,"Malformed/non-object response fails without invented prices: "+body[..Math.Min(12,body.Length)]);
         }
+        using var spiritCatalog=JsonDocument.Parse("""{"result":[{"entries":[{"id":"explicit.stat_3981240776","text":"# to Spirit"},{"id":"explicit.stat_2704225257","text":"# to Spirit"},{"id":"implicit.spirit","text":"# to Spirit"},{"id":"explicit.strength","text":"+# to Strength"}]}]}""");
+        var amulet=ItemParser.Parse("Item Class: Amulets\nRarity: Magic\nCountess' Bloodstone Amulet of the Titan\n--------\nItem Level: 75\n+31 to maximum Life (implicit)\n+50 to Spirit\n+32 to Strength")!;
+        var spiritRequest=request with {Item=amulet,Filters=new[]{new PriceConstraint("+50 to Spirit",50,60,0,"Item text",1),new PriceConstraint("+32 to Strength",32,null,0,"Item text",2)}};
+        using var spiritQuery=JsonDocument.Parse(LiveTradeClient.BuildQuery(spiritRequest,spiritCatalog.RootElement));
+        var groups=spiritQuery.RootElement.GetProperty("query").GetProperty("stats");
+        var choices=groups[1].GetProperty("filters");
+        check(groups[1].GetProperty("type").GetString()=="count" && groups[1].GetProperty("value").GetProperty("min").GetInt32()==1 && choices.GetArrayLength()==2 && choices.EnumerateArray().All(x=>x.GetProperty("id").GetString()!.StartsWith("explicit.") && x.GetProperty("value").GetProperty("min").GetInt32()==50 && x.GetProperty("value").GetProperty("max").GetInt32()==60),"Duplicate Spirit IDs form an either-ID group with identical numeric bounds and kind");
+        check(groups[0].GetProperty("filters")[0].GetProperty("id").GetString()=="explicit.strength","Spirit alternatives do not weaken other selected filters");
+        var spiritData=new ListingDocument(request.League,"fixture",now,new[]{new ImportedListing("low","low",new(1,"Divine Orb"),amulet.Details.Replace("+50 to Spirit","+49 to Spirit"),now,true,false),new ImportedListing("match","match",new(2,"Divine Orb"),amulet.Details,now,true,false)});
+        check(ComparableMarket.Parse(JsonSerializer.Serialize(spiritData),now).Search(spiritRequest,now).Rows.Single().Listing.Id=="match","Spirit alternatives still reject under-minimum listings locally");
         int catalogs=0,searches=0;
         using var revised=new ScriptedHandler(path=> {
             if(path.Contains("/data/stats")) { catalogs++; return Ok("{\"result\":[{\"entries\":[{\"id\":\"explicit.life"+catalogs+"\",\"text\":\"+# to maximum Life\"}]}]}"); }
