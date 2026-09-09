@@ -16,7 +16,7 @@ Reviewed 9 September 2026 for the first public source publication. This is a sou
 | Sockets/artwork | Fetched socket data and safe official icon URLs; copied-effect inference; tooltips | Copied text may omit exact contents/order. Unknowns remain labelled and images can fail to load |
 | Comparisons | Side-by-side normalised cards, numerical changes collapsed by default, average-item comparison | Missing source stats are not silently invented; a positive numerical delta is not necessarily an upgrade |
 | Bookmarks/pins | Local bookmarks/notes, recent checks, independent pinned cards | Screen pins are temporary; not restored as a full workspace after restart |
-| Filter profiles | Save selected stat signatures by item class, reuse current-item bounds, active-filter summary, undo | Not a weighted-query editor. Persistence failure feedback needs further hardening |
+| Filter profiles | Save selected stat signatures by item class, reuse current-item bounds, active-filter summary, undo | Not a weighted-query editor. Save failures are labelled session-only; retries are supported |
 | Map warnings | User-defined literal phrases highlighted when a waystone is copied | No automatic background map inspection or built-in exhaustive danger-rule catalogue |
 | Rune choices | User-selected region, local Tesseract English OCR, confidence/ambiguity guards, cached indicative price annotations | Requires setup/start; only scans with POE2 foreground; approximate names require review; not rune auto-selection |
 | Area guides | Structured Client.txt events; separate Logbook guide, watchlist, manually selected encounter guides | Ritual/Delirium context is not automatically inferred without verified events |
@@ -27,7 +27,7 @@ Reviewed 9 September 2026 for the first public source publication. This is a sou
 
 ## Validation and publication fixes
 
-- **201 core checks pass**, covering parsing, capture state, filter/query generation, mock HTTP search/fetch shapes, rate handling, currencies and OCR name matching.
+- **232 core checks pass**, covering parsing, capture state, filter/query generation, mock HTTP search/fetch shapes, rate handling, currencies and OCR name matching.
 - **Windows UI smoke passes**, including filter workflows, layout, profiles, comparisons, placement, tray popup bounds and native OCR against a generated text image.
 - Desktop publishing succeeds. CI builds the desktop and optional service and runs core checks. UI smoke remains a desktop check.
 - Replaced a developer-specific default game path with the conventional Steam path; other installations select their log in Settings.
@@ -36,12 +36,14 @@ Reviewed 9 September 2026 for the first public source publication. This is a sou
 - Replaced contradictory accumulated README status notes with a current overview and labelled historical documents.
 - Retained dependency licenses and added the project MIT license. Showcase captures contain synthetic sellers/prices and no desktop/chat background.
 
-## Recommended next work
+## Reliability follow-up — 0.4.0-beta.1
 
-1. Expand real, sanitised item fixtures for uncommon modifier kinds, sockets and currencies.
-2. Add deterministic HTTP fixtures for more server errors and catalogue revisions; expose clearer sample-size/coverage diagnostics.
-3. Harden profile-save error reporting and add broader multi-monitor/DPI/manual game integration checks.
-4. Improve known-socket artwork resolution without claiming identification from ambiguous clipboard text.
-5. Evaluate similarity recommendations against a labelled benchmark before claiming valuation accuracy.
+The first pass of the recommended work is implemented:
 
-The implemented feature set is useful, but full parity with POE Overlay II or Exiled Exchange 2 has **not** been established.
+1. Added transcribed reported bow/lineage examples and synthetic currency/socket fixtures with explicit provenance.
+2. Added deterministic HTTP 400/401/403/429/500/503, malformed-response and catalogue-revision checks; exposed sample and rate exclusions in price diagnostics.
+3. Fixed profile persistence success/error feedback. Expanded DPI/monitor geometry checks and fixed a fractional-bound clamp failure. Actual mixed-monitor/game checks remain manual; see [release checklist](RELEASING.md).
+4. Added session-local exact-name socket artwork learning from confirmed source metadata, without new searches or false identity confirmation.
+5. Added an [eight-case labelled similarity regression benchmark](SIMILARITY_BENCHMARK.md). Real-market valuation validation remains open because synthetic cases cannot establish sale-price accuracy.
+
+Full parity with POE Overlay II or Exiled Exchange 2 has **not** been established. Remaining work focuses on real-world coverage and data quality rather than claiming the implemented checks prove complete accuracy.

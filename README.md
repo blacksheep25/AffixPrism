@@ -21,6 +21,10 @@ A compact, ad-free Windows companion for **Path of Exile 2**. Check an item with
 
 Read the [feature audit](docs/FEATURE_AUDIT.md) for scope and limitations, or browse the [screenshot gallery](docs/SCREENSHOTS.md).
 
+## Download
+
+Get the Windows x64 ZIP and checksum from [Releases](https://github.com/blacksheep25/ExileLens/releases). Extract every file and run `ExileLens.exe`; .NET is bundled. Exit older tray instances before upgrading. See the [changelog](CHANGELOG.md) and [release/validation process](docs/RELEASING.md).
+
 ## Run from source
 
 Requires Windows 10/11 x64, the **.NET 8 SDK**, and the Microsoft Visual C++ 2015–2022 x64 runtime for native OCR. Use POE2 in windowed or borderless mode. Linux/macOS are not supported.

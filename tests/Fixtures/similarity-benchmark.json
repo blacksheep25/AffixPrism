@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Identical bow",
+    "replace": "",
+    "withText": "",
+    "eligible": true
+  },
+  {
+    "name": "Nearby physical roll",
+    "replace": "107% increased Physical Damage",
+    "withText": "102% increased Physical Damage",
+    "eligible": true
+  },
+  {
+    "name": "Missing extra arrow",
+    "replace": "Bow Attacks fire an additional Arrow (rune)",
+    "withText": "",
+    "eligible": false
+  },
+  {
+    "name": "Weaker skill level",
+    "replace": "+2 to Level",
+    "withText": "+1 to Level",
+    "eligible": false
+  },
+  {
+    "name": "Low physical damage",
+    "replace": "167-311",
+    "withText": "80-150",
+    "eligible": false
+  },
+  {
+    "name": "Corrupted peer",
+    "replace": "",
+    "withText": "\nCorrupted",
+    "eligible": false
+  },
+  {
+    "name": "Different base",
+    "replace": "Obliterator Bow",
+    "withText": "Crude Bow",
+    "eligible": false
+  },
+  {
+    "name": "Rune arrow is not explicit",
+    "replace": "Bow Attacks fire an additional Arrow (rune)",
+    "withText": "Bow Attacks fire an additional Arrow",
+    "eligible": false
+  }
+]

@@ -57,14 +57,27 @@ internal static class WindowPlacement
     {
         var area=Forms.Screen.FromHandle(new WindowInteropHelper(window).Handle).WorkingArea;
         var dpi=VisualTreeHelper.GetDpi(window);
-        double left=area.Left/dpi.DpiScaleX,top=area.Top/dpi.DpiScaleY,width=area.Width/dpi.DpiScaleX,height=area.Height/dpi.DpiScaleY;
-        window.MinWidth=Math.Min(window.MinWidth,width); window.MinHeight=Math.Min(window.MinHeight,height);
-        window.Width=Math.Clamp(window.Width,window.MinWidth,width); window.Height=Math.Clamp(window.Height,window.MinHeight,height);
-        window.Left=Math.Clamp(double.IsFinite(window.Left)?window.Left:left,left,left+width-window.Width);
-        window.Top=Math.Clamp(double.IsFinite(window.Top)?window.Top:top,top,top+height-window.Height);
+        var work=new Rect(area.Left/dpi.DpiScaleX,area.Top/dpi.DpiScaleY,area.Width/dpi.DpiScaleX,area.Height/dpi.DpiScaleY);
+        window.MinWidth=Math.Min(window.MinWidth,work.Width); window.MinHeight=Math.Min(window.MinHeight,work.Height);
+        var fitted=FitBounds(new Rect(double.IsFinite(window.Left)?window.Left:work.Left,double.IsFinite(window.Top)?window.Top:work.Top,
+            double.IsFinite(window.Width)?window.Width:window.MinWidth,double.IsFinite(window.Height)?window.Height:window.MinHeight),work,window.MinWidth,window.MinHeight);
+        window.Width=fitted.Width; window.Height=fitted.Height; window.Left=fitted.Left; window.Top=fitted.Top;
+    }
+    private static Rect FitBounds(Rect bounds,Rect work,double minimumWidth,double minimumHeight)
+    {
+        double width=Math.Clamp(bounds.Width,Math.Min(minimumWidth,work.Width),work.Width);
+        double height=Math.Clamp(bounds.Height,Math.Min(minimumHeight,work.Height),work.Height);
+        return new Rect(Math.Clamp(bounds.Left,work.Left,Math.Max(work.Left,work.Right-width)),Math.Clamp(bounds.Top,work.Top,Math.Max(work.Top,work.Bottom-height)),width,height);
     }
     public static void Verify()
     {
+        foreach(double scale in new[] {1d,1.25d,1.5d,2d})
+        foreach(var physical in new[] {new Rect(-2560,0,2560,1400),new Rect(1920,-1080,1920,1040),new Rect(48,0,1872,1080),new Rect(0,48,1920,1032)})
+        {
+            var work=new Rect(physical.X/scale,physical.Y/scale,physical.Width/scale,physical.Height/scale);
+            foreach(var bounds in new[] {new Rect(-100000,-100000,800,900),new Rect(100000,100000,800,900),new Rect(0,0,5000,5000)})
+                if(!work.Contains(FitBounds(bounds,work,400,400))) throw new Exception("DPI/work-area clamp failed");
+        }
         string directory=Path.Combine(Path.GetTempPath(),"ExileLens-placement-"+Guid.NewGuid().ToString("N"));
         bool wasDisabled=Disabled;
         Window? first=null,second=null;

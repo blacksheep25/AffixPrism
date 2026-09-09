@@ -7,16 +7,20 @@ using ExileLens.Core;
 namespace ExileLens;
 public sealed class SocketStrip : StackPanel
 {
+    private static readonly SocketArtworkCatalog Artwork = new();
+    private static event System.Action? ArtworkChanged;
+    public static void Observe(System.Collections.Generic.IEnumerable<ItemSocket> sockets) { if(Artwork.Observe(sockets)) ArtworkChanged?.Invoke(); }
     public static readonly DependencyProperty ItemProperty = DependencyProperty.Register(nameof(Item),typeof(CopiedItem),typeof(SocketStrip),new PropertyMetadata(null,Changed));
     public CopiedItem? Item { get => (CopiedItem?)GetValue(ItemProperty); set => SetValue(ItemProperty,value); }
-    public SocketStrip() { Orientation=Orientation.Horizontal; HorizontalAlignment=HorizontalAlignment.Center; }
+    public SocketStrip() { Orientation=Orientation.Horizontal; HorizontalAlignment=HorizontalAlignment.Center; Loaded+=(_,_)=> { ArtworkChanged+=Render; Render(); }; Unloaded+=(_,_)=>ArtworkChanged-=Render; }
     private static void Changed(DependencyObject d,DependencyPropertyChangedEventArgs e) => ((SocketStrip)d).Render();
     private void Render()
     {
         Children.Clear();
         if(Item == null) return;
-        foreach(var socket in ItemSockets.From(Item))
+        foreach(var original in ItemSockets.From(Item))
         {
+            var socket=Artwork.Resolve(original);
             string label=socket.Occupied == false ? "Empty socket" : socket.Occupied == null ? "Socket contents unresolved" : socket.Name ?? "Rune effect detected";
             Border Details() {
                 var panel = new StackPanel();

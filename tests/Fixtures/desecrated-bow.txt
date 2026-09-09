@@ -1,0 +1,26 @@
+Item Class: Bows
+Rarity: Rare
+Hate Twine
+Obliterator Bow
+--------
+Quality: +20%
+Physical Damage: 167-311
+Elemental Damage: 33-51 (fire), 33-59 (cold)
+Critical Hit Chance: 5.00%
+Attacks per Second: 1.29
+Requires: Level 78, 163 Dex
+Sockets: S S
+Item Level: 78
+--------
+18% increased Physical Damage (rune)
+Bow Attacks fire an additional Arrow (rune)
+--------
+50% reduced Projectile Range (implicit)
+--------
+107% increased Physical Damage
+Adds 33 to 51 Fire Damage
+Adds 33 to 59 Cold Damage
+Leeches 8.24% of Physical Damage as Life
+17% increased Attack Speed
+Companions have 17% increased Attack Speed (desecrated)
++2 to Level of all Attack Skills (crafted)

@@ -99,16 +99,26 @@ public partial class EvaluationWindow
         MapWarnings.Visibility=hits.Length==0 ? Visibility.Collapsed : Visibility.Visible;
         WarningText.Text=$"⚠ {activeProfile} · flagged map modifiers\n"+string.Join("\n",hits);
     }
-    private void SaveProfiles()
+    private Action<string>? profileWriterForVerification;
+    private string profileSaveError = "";
+    private bool SaveProfiles()
     {
-        if(IsTestMode || !profilesWritable) return;
-        try { Directory.CreateDirectory(Path.GetDirectoryName(ProfilePath)!); File.WriteAllText(ProfilePath+".tmp",JsonSerializer.Serialize(new ProfileFile(profiles,activeProfile))); File.Move(ProfilePath+".tmp",ProfilePath,true); }
-        catch(Exception ex) when(ex is IOException or UnauthorizedAccessException) { QolStatus.Text="Profile could not be saved; changes remain in memory."; }
+        profileSaveError = "";
+        if(!profilesWritable) { profileSaveError="Profiles were not loaded safely. Existing file is preserved; changes are session-only."; QolStatus.Text=profileSaveError; return false; }
+        try
+        {
+            string json=JsonSerializer.Serialize(new ProfileFile(profiles,activeProfile));
+            if(profileWriterForVerification!=null) profileWriterForVerification(json);
+            else if(!IsTestMode) { Directory.CreateDirectory(Path.GetDirectoryName(ProfilePath)!); File.WriteAllText(ProfilePath+".tmp",json); File.Move(ProfilePath+".tmp",ProfilePath,true); }
+            return true;
+        }
+        catch(Exception ex) when(ex is IOException or UnauthorizedAccessException)
+        { profileSaveError="Could not save profiles. Changes are session-only; check folder access and free disk space, then try Save again."; QolStatus.Text=profileSaveError; return false; }
     }
     private void ApplyProfile(FilterProfile profile)
     {
-        activeProfile=profile.Name; SaveProfiles(); RefreshWarnings();
-        if(item==null || !item.ItemClass.Equals(profile.ItemClass,StringComparison.OrdinalIgnoreCase)) { QolStatus.Text=$"{profile.Name} warnings active. Filter template applies to {profile.ItemClass}."; return; }
+        activeProfile=profile.Name; bool persisted=SaveProfiles(); RefreshWarnings();
+        if(item==null || !item.ItemClass.Equals(profile.ItemClass,StringComparison.OrdinalIgnoreCase)) { QolStatus.Text=$"{profile.Name} warnings active. Filter template applies to {profile.ItemClass}." + (persisted ? "" : "\n"+profileSaveError); return; }
         building=true; BroadPreset.IsChecked=profile.Broad; ExactPreset.IsChecked=!profile.Broad;
         foreach(var group in drafts.GroupBy(x=>x.Filter.GroupId))
         {
@@ -117,7 +127,7 @@ public partial class EvaluationWindow
             foreach(var row in group) { row.Filter.Preset(profile.Broad); row.Min.Text=row.Filter.Minimum; row.Max.Text=row.Filter.Maximum; }
         }
         building=false; InvalidatePrices(); StoreDraft();
-        QolStatus.Text=$"Applied {profile.Name} · {drafts.Where(x=>x.Filter.Enabled).Select(x=>x.Filter.GroupId).Distinct().Count()} matching stats; bounds use this item's rolls. Search when ready.";
+        QolStatus.Text=$"Applied {profile.Name} · {drafts.Where(x=>x.Filter.Enabled).Select(x=>x.Filter.GroupId).Distinct().Count()} matching stats; bounds use this item's rolls. Search when ready." + (persisted ? "" : "\n"+profileSaveError);
     }
     private void OpenProfiles(object sender,RoutedEventArgs e)
     {
@@ -129,7 +139,7 @@ public partial class EvaluationWindow
         var help=new TextBlock { Text="Save selected stats and Item values/Broad mode for this item class. Numeric bounds use the next item's own rolls. Map warnings match your phrases in copied waystones; no background map detection.",TextWrapping=TextWrapping.Wrap };
         panel.Children.Add(help); panel.Children.Add(choose); panel.Children.Add(new TextBlock { Text="Profile name",Margin=new Thickness(0,10,0,3) }); panel.Children.Add(name);
         panel.Children.Add(new TextBlock { Text="Map warning phrases · one per line",Margin=new Thickness(0,10,0,3) }); panel.Children.Add(warnings);
-        var feedback=new TextBlock { TextWrapping=TextWrapping.Wrap }; panel.Children.Add(feedback);
+        var feedback=new TextBlock { TextWrapping=TextWrapping.Wrap, Text=profilesWritable ? "" : "Profiles could not be loaded. Existing file preserved; saving is disabled." }; panel.Children.Add(feedback);
         var actions=new WrapPanel(); panel.Children.Add(actions);
         var save=new Button { Content="Save current filters",IsEnabled=profilesWritable && item!=null }; var apply=new Button { Content="Apply selected" }; var remove=new Button { Content="Delete selected",IsEnabled=profilesWritable };
         actions.Children.Add(save); actions.Children.Add(apply); actions.Children.Add(remove);
@@ -139,7 +149,7 @@ public partial class EvaluationWindow
             if(existing==null) { feedback.Text="Select an existing profile first."; return; }
             var phrases=warnings.Text.Split('\n',StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
             if(phrases.Length>50 || phrases.Any(w=>w.Length>160)) { feedback.Text="Limit: 50 phrases, 160 characters each."; return; }
-            profiles[profiles.IndexOf(existing)]=existing with { Warnings=phrases }; activeProfile=existing.Name; SaveProfiles(); RefreshWarnings(); QueueContentResize(); feedback.Text="Warnings saved; filter template preserved.";
+            profiles[profiles.IndexOf(existing)]=existing with { Warnings=phrases }; activeProfile=existing.Name; bool saved=SaveProfiles(); RefreshWarnings(); QueueContentResize(); feedback.Text=saved ? "Warnings saved; filter template preserved." : profileSaveError;
         };
         void Fill() { if(profiles.FirstOrDefault(p=>p.Name==choose.SelectedItem as string) is {} p) { name.Text=p.Name; warnings.Text=string.Join("\n",p.Warnings); } }
         choose.SelectionChanged+=(_,_)=>Fill(); Fill();
@@ -149,10 +159,10 @@ public partial class EvaluationWindow
             if(phrases.Length>50 || phrases.Any(w=>w.Length>160) || (profiles.Count>=30 && profiles.All(p=>p.Name!=title))) { feedback.Text="Limit: 30 profiles, 50 phrases per profile, 160 characters per phrase."; return; }
             profiles.RemoveAll(p=>p.Name==title);
             profiles.Add(new(title,item.ItemClass,BroadPreset.IsChecked==true,drafts.Where(x=>x.Filter.Enabled).Select(x=>new ProfileStat(ComparableMarket.Signature(x.Filter.Text),x.Filter.Kind)).Distinct().ToArray(),phrases));
-            activeProfile=title; SaveProfiles(); RefreshWarnings(); QueueContentResize(); choose.ItemsSource=profiles.Select(p=>p.Name).ToArray(); choose.SelectedItem=title; feedback.Text="Profile saved; warning phrases are active.";
+            activeProfile=title; bool saved=SaveProfiles(); RefreshWarnings(); QueueContentResize(); choose.ItemsSource=profiles.Select(p=>p.Name).ToArray(); choose.SelectedItem=title; feedback.Text=saved ? "Profile saved; warning phrases are active." : profileSaveError;
         };
         apply.Click+=(_,_)=> { if(profiles.FirstOrDefault(p=>p.Name==choose.SelectedItem as string) is {} p) { ApplyProfile(p); QueueContentResize(); profileWindow?.Close(); } };
-        remove.Click+=(_,_)=> { if(choose.SelectedItem is string title) { profiles.RemoveAll(p=>p.Name==title); if(activeProfile==title) activeProfile=null; SaveProfiles(); RefreshWarnings(); choose.ItemsSource=profiles.Select(p=>p.Name).ToArray(); } };
+        remove.Click+=(_,_)=> { if(choose.SelectedItem is string title) { profiles.RemoveAll(p=>p.Name==title); if(activeProfile==title) activeProfile=null; bool saved=SaveProfiles(); RefreshWarnings(); choose.ItemsSource=profiles.Select(p=>p.Name).ToArray(); feedback.Text=saved ? "Profile deleted." : profileSaveError; } };
         profileWindow=new Window { Title="Filter profiles and map warnings",Owner=this,Resources=Resources,Width=470,Height=480,MinWidth=420,MinHeight=360,Background=new SolidColorBrush(Color.FromRgb(20,20,16)),Foreground=Foreground,Content=new ScrollViewer { Content=panel,VerticalScrollBarVisibility=ScrollBarVisibility.Auto },Topmost=true,ShowInTaskbar=false };
         profileWindow.WindowStyle=WindowStyle.None; profileWindow.AllowsTransparency=true; profileWindow.ResizeMode=ResizeMode.CanResizeWithGrip;
         var shell=new DockPanel(); var header=new DockPanel { Margin=new Thickness(12,8,12,0) };
@@ -179,6 +189,13 @@ public partial class EvaluationWindow
         var skills=drafts.First(x=>x.Filter.Text.Contains("Level of all Melee Skills",StringComparison.OrdinalIgnoreCase));
         var template=new FilterProfile("Melee test",weapon.ItemClass,true,new[] {new ProfileStat(ComparableMarket.Signature(skills.Filter.Text),skills.Filter.Kind)},new[] {"cannot regenerate"});
         profiles.Add(template);
+        profileWriterForVerification=_=>throw new IOException("Simulated full disk");
+        ApplyProfile(template);
+        if(!QolStatus.Text.Contains("session-only") || !profileSaveError.Contains("Could not save")) throw new Exception("Profile failure was overwritten by success feedback");
+        profilesWritable=false;
+        if(SaveProfiles() || !profileSaveError.Contains("preserved")) throw new Exception("Unreadable profile protection failed");
+        profilesWritable=true; profileWriterForVerification=null;
+        if(!SaveProfiles() || profileSaveError.Length!=0) throw new Exception("Profile save did not recover");
         SetItem(ItemParser.Parse(weapon.Details.Replace("+4 to Level of all Melee Skills","+6 to Level of all Melee Skills")),"QOL fixture");
         ApplyProfile(template);
         var applied=drafts.Where(x=>x.Filter.Enabled).ToArray();

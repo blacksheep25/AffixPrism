@@ -12,12 +12,14 @@ public sealed class LiveTradeClient(HttpClient http)
     private readonly SemaphoreSlim gate = new(1, 1);
     private readonly Dictionary<string, DateTimeOffset> nextRequests = new();
     private JsonElement? statCatalog, filterCatalog;
+    private DateTimeOffset catalogExpires;
     private readonly Dictionary<string, (DateTimeOffset At, ComparableResult Result)> cache = new();
     public async Task<ComparableResult> SearchAsync(ComparableRequest request, CancellationToken token, Action<string>? progress = null)
     {
         await gate.WaitAsync(token);
         try
         {
+            if(DateTimeOffset.UtcNow>=catalogExpires) { statCatalog=null; filterCatalog=null; catalogExpires=DateTimeOffset.UtcNow.AddMinutes(30); }
             if (request.Filters.Any(x => x.Kind != "Property") && statCatalog == null)
                 statCatalog = await SendAsync(HttpMethod.Get, "/api/trade2/data/stats", null, "stats", "Loading trade filters…", token, progress);
             string? category = null;
@@ -32,7 +34,7 @@ public sealed class LiveTradeClient(HttpClient http)
                 return saved.Result with { Source = saved.Result.Source + " · cached (under 2 minutes)" };
             var search = await SendAsync(HttpMethod.Post, "/api/trade2/search/poe2/" + Uri.EscapeDataString(request.League), body, "search", "Searching POE trade…", token, progress);
             string queryId = ReadText(search.GetProperty("id"), "search.id");
-            int? total = search.TryGetProperty("total", out var count) && count.TryGetInt32(out var found) ? found : null;
+            int? total = search.TryGetProperty("total", out var count) && count.ValueKind==JsonValueKind.Number && count.TryGetInt32(out var found) ? found : null;
             ComparableResult Complete(ComparableResult result, int fetched)
             {
                 result = result with { TotalMatches = total, FetchedCount = fetched, SearchUrl = "https://www.pathofexile.com/trade2/search/poe2/" + Uri.EscapeDataString(request.League) + "/" + Uri.EscapeDataString(queryId) };
@@ -93,8 +95,18 @@ public sealed class LiveTradeClient(HttpClient http)
                 throw new HttpRequestException($"Trade rate limit reached. Retry in {Math.Ceiling((nextRequests[policy] - DateTimeOffset.UtcNow).TotalSeconds)} seconds.");
             if (response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.Unauthorized)
                 throw new HttpRequestException("The trade site requires sign-in or browser verification. ExileLens's direct connection cannot complete that verification yet.");
+            if(response.StatusCode==HttpStatusCode.BadRequest)
+            {
+                statCatalog=null; filterCatalog=null; cache.Clear();
+                throw new HttpRequestException("Trade rejected the query (HTTP 400). Check league and filters; the filter catalogue will reload on your next Search. No automatic retry was sent.");
+            }
+            if((int)response.StatusCode>=500) throw new HttpRequestException($"Trade service unavailable (HTTP {(int)response.StatusCode}). Try again later; no automatic retry was sent.");
             if (!response.IsSuccessStatusCode) throw new HttpRequestException($"Trade search failed (HTTP {(int)response.StatusCode}). Check the league and selected filters.");
-            using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(token));
+            JsonDocument document;
+            try { document=JsonDocument.Parse(await response.Content.ReadAsStringAsync(token)); }
+            catch(JsonException ex) { throw new JsonException("Trade returned an invalid JSON response. The service may be unavailable or require browser verification.",ex); }
+            using var ownedDocument=document;
+            if(document.RootElement.ValueKind!=JsonValueKind.Object) throw new JsonException("Unsupported trade response: expected a JSON object. No prices were inferred.");
             if (document.RootElement.TryGetProperty("error", out _)) throw new HttpRequestException("The trade site rejected this query. Check the selected filters.");
             return document.RootElement.Clone();
         }

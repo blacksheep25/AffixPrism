@@ -357,6 +357,7 @@ Check(RuneNames.Match("Greater lron Rune",90,runeCatalog)?.Approximate == true, 
 Check(RuneNames.Match("Perfect Iron Rune",90,runeCatalog.Take(1).ToArray()) == null, "Missing rune tier cannot fall back to another tier");
 Check(RuneNames.Match("Choose your reward",99,runeCatalog) == null, "Unrelated menu text has no guessed price");
 Check(RuneNames.Match("Iron Rune",90,runeCatalog.Concat(new[] {runeCatalog[2]}).ToArray()) == null, "Ambiguous market identities are rejected");
+await ReliabilityChecks.Run(Check);
 Console.WriteLine($"{checks} checks passed.");
 
 sealed class CaptureFake : IItemCapturePlatform

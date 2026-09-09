@@ -13,7 +13,7 @@ public static class SimilarItems
         var a = ItemAnalysis.From(yours); var b = ItemAnalysis.From(other);
         if (yours.BaseType != other.BaseType || yours.Rarity != other.Rarity || a.CorruptionLevel != b.CorruptionLevel || a.Unidentified != b.Unidentified || yours.Rarity == "Unique" && !a.Unidentified && yours.Name != other.Name) return 0;
         foreach (var critical in a.Lines.Where(l => l.Text.Contains("to Level of",StringComparison.OrdinalIgnoreCase) || l.Text.Contains("additional Arrow",StringComparison.OrdinalIgnoreCase)))
-            if (!b.Lines.Any(l=>ComparableMarket.Signature(l.Text)==ComparableMarket.Signature(critical.Text) && Values(l.Text).SequenceEqual(Values(critical.Text)))) return 0;
+            if (!b.Lines.Any(l=>l.Kind==critical.Kind && ComparableMarket.Signature(l.Text)==ComparableMarket.Signature(critical.Text) && Values(l.Text).SequenceEqual(Values(critical.Text)))) return 0;
         var myDps=a.Lines.FirstOrDefault(l=>l.Text.StartsWith("Total DPS:"));
         if(myDps != null)
         {
@@ -45,7 +45,7 @@ public static class SimilarItems
         if (ItemAnalysis.From(item).Unidentified) return new(null,result.SellerCount,0,null,"Unidentified base-item listings only. Hidden identity and modifiers cannot be valued reliably.");
         var peers = result.Rows.Select(r => (Row:r, Score:Score(item,r.Item), Price:ConvertedPrice(r,result))).Where(r=>r.Price.HasValue).Where(r => r.Score >= .8m)
             .GroupBy(r => r.Row.Account.Trim(), StringComparer.OrdinalIgnoreCase).Select(g => g.OrderByDescending(r => r.Score).ThenBy(r => r.Price).First()).OrderByDescending(p=>p.Score).Take(10).ToArray();
-        if (peers.Length < 3) return new(null,peers.Length,0,null,"No recommendation: at least 3 independent sellers with 80% modifier/roll similarity are required.");
+        if (peers.Length < 3) return new(null,peers.Length,0,null,$"No recommendation: {peers.Length} qualifying independent sellers; at least 3 with 80% modifier/roll similarity are required. " + PriceDiagnostics.From(item,result).Summary);
         var prices = peers.Select(r => r.Price!.Value).Order().ToArray();
         decimal price = (prices[(prices.Length-1)/2]+prices[prices.Length/2])/2;
         var lines = ItemAnalysis.From(item).Lines.Select(line =>

@@ -350,12 +350,14 @@ public partial class EvaluationWindow : Window
     }
     public void SetComparableResult(ComparableResult result)
     {
+        SocketStrip.Observe(result.Rows.SelectMany(r=>r.Item.Sockets ?? Array.Empty<ItemSocket>()));
         currentQueryUrl=result.SearchUrl; OpenQueryButton.Visibility=currentQueryUrl==null ? Visibility.Collapsed : Visibility.Visible;
         ItemHeaderArt.Url = result.Rows.Select(x => x.IconUrl).FirstOrDefault(x => x != null);
         QueueContentResize();
         Estimate.Text = "—";
         EstimateSource.Text = item != null && ItemAnalysis.From(item).Unidentified ? "Unidentified base-item listings · hidden identity and modifiers cannot be valued reliably." : "No reliable item estimate · not enough sufficiently similar listings. Use Match modifiers to narrow the search.";
         var similar = item == null ? null : SimilarItems.Estimate(item, result);
+        if(similar!=null && !similar.Price.HasValue) EstimateSource.Text=similar.Explanation;
         averageListing = null; AverageCompare.Visibility = Visibility.Collapsed;
         if (similar?.Price is { } recommended && similar.Average is { } average)
         {
@@ -366,6 +368,7 @@ public partial class EvaluationWindow : Window
         }
         ResultStatus.Text = (similar?.Explanation ?? "") + "\n" + $"{result.Source} · captured {result.CapturedAt.ToLocalTime():dd MMM HH:mm}\n{result.Rows.Count} matching listings · asking prices, not completed sales\n{(result.Source.Contains("BROADER RESULTS") ? "Broader base-item comparison · your selected filters found no listings" : drafts.Any(x => x.Filter.Enabled) ? drafts.Count(x => x.Filter.Enabled) + " selected numeric filters" : "Base and rarity only · select modifiers to narrow results")}";
         ResultCount.Text = result.TotalMatches is { } total ? $"{result.Rows.Count} shown · {result.FetchedCount ?? 0} fetched · {total:N0} found on trade" : $"{result.Rows.Count} shown";
+        if(item!=null) { var coverage=PriceDiagnostics.From(item,result); ResultCount.ToolTip=coverage.Summary; ResultStatus.Text+="\n"+coverage.Summary; }
         Variants.ItemsSource = result.Rows.OrderByDescending(r => item == null ? 0 : SimilarItems.Score(item,r.Item)).Take(100).ToArray();
 
         EmptyResults.Text = result.Rows.Count == 0 ? result.TotalMatches > 0 ? "Trade found offers, but none of the fetched sample passed the local filters. Open Trade query to inspect all results." : "No offers found for this search." : "";

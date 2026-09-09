@@ -1,0 +1,7 @@
+Item Class: Stackable Currency
+Rarity: Currency
+Exalted Orb
+--------
+Stack Size: 7/20
+--------
+Augments a rare item with a new random modifier

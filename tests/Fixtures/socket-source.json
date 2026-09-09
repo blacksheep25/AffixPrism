@@ -1,0 +1,25 @@
+{
+  "sockets": [
+    {
+      "type": "rune"
+    },
+    {
+      "type": "rune"
+    },
+    {
+      "type": "rune"
+    }
+  ],
+  "socketedItems": [
+    {
+      "socket": 0,
+      "typeLine": "Greater Iron Rune",
+      "socketedIcon": "https://web.poecdn.com/fixture/greater-iron.png"
+    },
+    {
+      "socket": 1,
+      "name": "Adept Rune",
+      "icon": "https://web.poecdn.com/fixture/adept.png"
+    }
+  ]
+}

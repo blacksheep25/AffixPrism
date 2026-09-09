@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <Version>0.4.0-beta.1</Version>
+    <Authors>ExileLens contributors</Authors>
+    <RepositoryUrl>https://github.com/blacksheep25/ExileLens</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+</Project>
