@@ -14,7 +14,9 @@ public sealed class ListingComparisonWindow : Window
     public string Yours { get; }
     public string Seller { get; }
     public string Changes { get; }
-    public ListingComparisonWindow(CopiedItem yours, ComparableListing listing, string? yourIcon = null)
+    public ListingComparisonWindow(CopiedItem yours, CopiedItem other) : this(yours,
+        new ComparableListing(new ImportedListing("pinned", "Pinned comparison", new ListingPrice(0,""), other.Details, DateTimeOffset.Now, false, false), other, ItemAnalysis.From(other)), null, "Pinned item → current item") { }
+    public ListingComparisonWindow(CopiedItem yours, ComparableListing listing, string? yourIcon = null, string? heading = null)
     {
         WindowPlacement.Attach(this,"comparison");
         Yours = yours.Details;
@@ -33,13 +35,22 @@ public sealed class ListingComparisonWindow : Window
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         var title = new Grid { Margin = new Thickness(0, 0, 0, 10) };
         title.ColumnDefinitions.Add(new ColumnDefinition()); title.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        title.Children.Add(new TextBlock { Text = listing.Account + " · " + listing.PriceLabel, Margin = new Thickness(8), Foreground = new SolidColorBrush(Color.FromRgb(191,165,109)) });
+        title.Children.Add(new TextBlock { Text = heading ?? listing.Account + " · " + listing.PriceLabel, Margin = new Thickness(8), Foreground = new SolidColorBrush(Color.FromRgb(191,165,109)) });
         var drag = new Thumb { Cursor = Cursors.SizeAll, Background = Brushes.Transparent, Opacity = 0 };
         drag.DragDelta += (_, e) => { Left += e.HorizontalChange; Top += e.VerticalChange; };
         title.Children.Add(drag);
         var close = new Button { Content = "Close", Padding = new Thickness(10,4,10,4) }; close.Click += (_, _) => Close();
         Grid.SetColumn(close, 1); title.Children.Add(close); grid.Children.Add(title);
         var content = new StackPanel { Margin = new Thickness(0,0,10,0) };
+        var keyStats = DefaultItemFilters.Suggested(yours);
+        var keyChanges = ItemComparison.Rows(yours,listing.Item).Where(r=>keyStats.Contains(r.Yours)).ToArray();
+        if(keyChanges.Length>0)
+        {
+            var summary = new StackPanel { Margin=new Thickness(8,4,8,12) };
+            summary.Children.Add(new TextBlock { Text="Key comparison · yours → seller", FontWeight=FontWeights.SemiBold, Foreground=Foreground });
+            foreach(var stat in keyChanges) summary.Children.Add(new TextBlock { Text=stat.Yours+"  →  "+stat.Seller, TextWrapping=TextWrapping.Wrap, Margin=new Thickness(0,4,0,0), Foreground=Foreground });
+            content.Children.Add(summary);
+        }
         var cards = new Grid(); cards.ColumnDefinitions.Add(new ColumnDefinition()); cards.ColumnDefinitions.Add(new ColumnDefinition());
         cards.Children.Add(new ItemPreviewCard { Item = yours, IconUrl = yourIcon, Margin = new Thickness(5) });
         var other = new ItemPreviewCard { Item = listing.Item, IconUrl = listing.IconUrl, Margin = new Thickness(5) }; Grid.SetColumn(other, 1); cards.Children.Add(other); content.Children.Add(cards);

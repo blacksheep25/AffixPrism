@@ -33,7 +33,7 @@ static class ReliabilityChecks
         check(confirmed.Count==3 && confirmed[2].Occupied==false && confirmed[0].IconUrl!.Contains("greater-iron"),"Source sockets retain preferred socketed artwork and explicit empty slot");
         var icons=new SocketArtworkCatalog();
         check(icons.Observe(confirmed) && icons.Resolve(sockets[0]).IconUrl==confirmed[0].IconUrl && icons.Resolve(sockets[0]).Inferred,"Known socket artwork enriches inferred exact name without changing confidence");
-        check(icons.Resolve(sockets[0] with {Name="Iron Rune"}).IconUrl==null && icons.Resolve(sockets[0] with {Name="Iron Rune family"}).IconUrl==null,"Artwork never crosses tiers or resolves ambiguous family names");
+        check(icons.Resolve(sockets[0] with {Name="Iron Rune"}).IconUrl==SocketAugments.Icon("Iron Rune") && icons.Resolve(sockets[0] with {Name="Iron Rune family"}).IconUrl==null,"Artwork never crosses tiers or resolves ambiguous family names");
         check(!icons.Observe(new[]{sockets[1] with {IconUrl="https://web.poecdn.com/fixture/inferred.png"}}) && !icons.Observe(new[]{confirmed[0] with {Name="Bad",IconUrl="file:///private.png"}}),"Artwork rejects inferred sources and non-official URLs");
         using var labels=JsonDocument.Parse(File.ReadAllText("tests/Fixtures/similarity-benchmark.json"));
         foreach(var test in labels.RootElement.EnumerateArray())

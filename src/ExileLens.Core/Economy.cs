@@ -4,8 +4,13 @@ namespace ExileLens.Core;
 
 public sealed record EconomyRow(string Name, string BaseType, string Variant, decimal Value, string Currency, int? ListingCount, bool? Corrupted)
 {
+    public string? IconUrl { get; init; }
+    public string? CategoryType { get; init; }
+    public bool ExchangeCategory { get; init; }
+    public decimal? ChangePercent { get; init; }
+    public IReadOnlyList<decimal?> History { get; init; } = Array.Empty<decimal?>();
     public string VariantLabel => string.IsNullOrWhiteSpace(Variant) ? (Corrupted == true ? "Corrupted" : "Standard") : Variant + (Corrupted == true ? " · Corrupted" : "");
-    public string PriceLabel => $"{Value:0.##} {Currency}";
+    public string PriceLabel => $"{MarketPriceDisplay.Amount(Value)} {Currency}";
     public string DetailLabel => string.Join(" · ", new[] { string.IsNullOrWhiteSpace(Variant) ? null : Variant, Corrupted == true ? "Corrupted" : null, ListingCount is { } n ? $"{n:N0} listings" : null }.Where(x => x != null));
 }
 public sealed record EconomySnapshot(IReadOnlyList<EconomyRow> Rows, DateTimeOffset FetchedAt, bool Cached, bool Stale, string Source = "poe.ninja");
@@ -86,6 +91,10 @@ public static class Economy
         var names = root.TryGetProperty("core", out var core) ? Metadata(core) : new Dictionary<string, string>();
         // Exchange item identities live at the root; core.items only describes pricing currencies.
         foreach(var entry in Metadata(root)) names[entry.Key]=entry.Value;
+        var icons = new Dictionary<string,string>();
+        if(root.TryGetProperty("items",out var imageItems) && imageItems.ValueKind==JsonValueKind.Array)
+            foreach(var imageItem in imageItems.EnumerateArray())
+                if(Text(imageItem,"name") is { } imageName && MarketIcon(Text(imageItem,"image") ?? Text(imageItem,"icon")) is { } icon) icons[imageName]=icon;
         var rows = new List<EconomyRow>();
         foreach (var line in lines.EnumerateArray())
         {
@@ -96,11 +105,19 @@ public static class Economy
             if (string.IsNullOrWhiteSpace(name)) continue;
             int? count = line.TryGetProperty("listingCount", out var n) && n.ValueKind == JsonValueKind.Number && n.TryGetInt32(out int countValue) ? countValue : null;
             bool? corrupted = line.TryGetProperty("corrupted", out var c) && c.ValueKind is JsonValueKind.True or JsonValueKind.False ? c.GetBoolean() : null;
-            rows.Add(new(name, Text(line, "baseType") ?? "", Text(line, "variant") ?? "", value, currency, count, corrupted));
+            decimal? change = null; var history = new List<decimal?>();
+            if ((line.TryGetProperty("sparkline",out var spark) || line.TryGetProperty("sparkLine",out spark)) && spark.ValueKind==JsonValueKind.Object)
+            {
+                if(spark.TryGetProperty("totalChange",out var delta) && delta.ValueKind==JsonValueKind.Number && delta.TryGetDecimal(out var percent)) change=percent;
+                if(spark.TryGetProperty("data",out var points) && points.ValueKind==JsonValueKind.Array)
+                    foreach(var point in points.EnumerateArray().Take(60)) history.Add(point.ValueKind==JsonValueKind.Number && point.TryGetDecimal(out var p) ? p : null);
+            }
+            rows.Add(new(name, Text(line, "baseType") ?? "", Text(line, "variant") ?? "", value, currency, count, corrupted) { IconUrl=MarketIcon(Text(line,"icon") ?? Text(line,"image")) ?? icons.GetValueOrDefault(name), ChangePercent=change, History=history });
         }
         return rows;
     }
     private static string? Text(JsonElement element, string key) => element.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+    private static string? MarketIcon(string? path) => ItemArtwork.SafeUrl(path?.StartsWith("/gen/image/",StringComparison.Ordinal)==true ? "https://web.poecdn.com"+path : path);
     private static string? Scalar(JsonElement element) => element.ValueKind == JsonValueKind.String ? element.GetString() : element.ValueKind == JsonValueKind.Number ? element.GetRawText() : null;
     private static Dictionary<string, string> Metadata(JsonElement core)
     {

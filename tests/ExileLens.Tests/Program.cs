@@ -101,6 +101,23 @@ using (var filtered = JsonDocument.Parse(filteredJson))
     Check(filtered.RootElement.GetProperty("query").GetProperty("filters").GetProperty("type_filters").GetProperty("filters").GetProperty("ilvl").GetProperty("min").GetInt32() == 80, "Trade minimum level serialized");
 const string marketJson = """{"core":{"primary":"exalted","items":[{"id":"exalted","name":"Exalted Orb"},{"id":"divine","name":"Divine Orb"}]},"lines":[{"id":"divine","primaryValue":120},null,{"name":"Broken","primaryValue":"bad"}]}""";
 var marketRows = Economy.Parse(marketJson, true);
+var displayNow=DateTimeOffset.UtcNow;
+var displayRates=new EconomySnapshot(new[]{new EconomyRow("Exalted Orb","","",.004m,"Divine Orb",null,null)},displayNow,false,false);
+var inexpensive=new EconomyRow("Example","","",.02m,"Divine Orb",null,null);
+Check(MarketPriceDisplay.Format(inexpensive,displayRates,displayNow)=="5 Exalted Orb","Sub-divine prices use fresh exalted rates");
+Check(MarketPriceDisplay.Format(inexpensive with {Value=2},displayRates,displayNow)=="2 Divine Orb","Prices at least one divine retain divine display");
+Check(MarketPriceDisplay.Format(inexpensive,displayRates with {Stale=true},displayNow)=="0.02 Divine Orb","Stale conversion rates retain original currency");
+Check(MarketPriceDisplay.Format(inexpensive,displayRates,displayNow.AddHours(2))=="0.02 Divine Orb","Expired conversion rates are not used");
+Check((inexpensive with {Value=.000001m}).PriceLabel=="0.000001 Divine Orb","Small positive prices do not round to zero");
+var hoverRates=displayRates with {Rows=displayRates.Rows.Concat(new[]{new EconomyRow("Chaos Orb","","",.1m,"Divine Orb",null,null)}).ToArray()};
+var hoverCurrencies=MarketHoverDetails.Currencies(inexpensive,hoverRates,displayNow);
+Check(hoverCurrencies.Contains("5 Exalted Orb") && hoverCurrencies.Contains("0.2 Chaos Orb") && hoverCurrencies.Contains("0.02 Divine Orb"),"Price hover shows fresh popular-currency equivalents");
+Check(MarketHoverDetails.Currencies(inexpensive,hoverRates with {Stale=true},displayNow).Contains("Fresh exchange rates unavailable"),"Price hover does not present stale conversions");
+var hoverHistory=MarketHoverDetails.History(inexpensive with {History=new decimal?[]{null,0,12,-5},ChangePercent=-5},displayNow);
+Check(hoverHistory.Contains("Sample 1: unavailable") && hoverHistory.Contains("Sample range: -5% to +12%") && hoverHistory.Contains("not historical sale prices"),"History hover explains missing points and relative changes");
+var referenceRows = Economy.Parse("""{"core":{"primary":"exalted","items":[{"id":"exalted","name":"Exalted Orb"}]},"items":[{"id":"demo","name":"Demo Rune","image":"/gen/image/demo.png"}],"lines":[{"id":"demo","primaryValue":5,"sparkline":{"totalChange":-8,"data":[null,0,2,-8]}}]}""", true);
+Check(referenceRows[0].IconUrl=="https://web.poecdn.com/gen/image/demo.png", "Market artwork resolves official relative image paths");
+Check(referenceRows[0].ChangePercent==-8 && referenceRows[0].History.SequenceEqual(new decimal?[]{null,0,2,-8}), "Market trend preserves provider values and missing history points");
 Check(marketRows.Count == 1 && marketRows[0].Name == "Divine Orb" && marketRows[0].Currency == "Exalted Orb", "Exchange metadata resolves identity and currency; malformed rows skipped");
 Check(Economy.Matching(marketRows, ItemParser.Parse("Rarity: Currency\nDivine Orb\n--------\nStack Size: 1/10")!).Count == 1, "Market identity matches copied item");
 Check(Economy.Category(rare) == null, "Rare items never receive generic automatic valuation");
@@ -265,7 +282,7 @@ var socketFixture = JsonDocument.Parse("""{"sockets":[{"type":"rune"},{"type":"r
 var actualSockets = ItemSockets.Parse(socketFixture.RootElement)!;
 Check(actualSockets[0].Occupied == false && actualSockets[1].Name == "Iron Rune" && actualSockets[1].IconUrl != null, "socketed items map by index and preserve artwork");
 var copiedSockets = ItemSockets.From(ItemParser.Parse("Rarity: Rare\nTest\nBow\n--------\nSockets: S S")!);
-Check(copiedSockets.Count == 2 && copiedSockets.All(s=>s.Occupied == null), "clipboard sockets do not invent their contents");
+Check(copiedSockets.Count == 2 && copiedSockets.All(s=>s.Occupied == false), "clipboard sockets without augment effects show empty sockets");
 
 var runeBow=ItemParser.Parse("Item Class: Bows\nRarity: Rare\nHate Twine\nObliterator Bow\n--------\nSockets: S S\n--------\n18% increased Physical Damage (rune)\nBow Attacks fire an additional Arrow (rune)")!;
 var inferredRunes=ItemSockets.From(runeBow);
@@ -316,6 +333,11 @@ Check(skillBound.Minimum == "4", "Broad skill-level bound rounds up to equivalen
 skillBound.Minimum="3.6";
 Check(skillBound.Validate()!=null,"Fractional skill-level bounds rejected");
 var criticalBound=new EvaluationFilter(new ItemLine("+1.17% to Critical Hit Chance","Explicit")); criticalBound.Preset(true);
+foreach (var text in new[] { "Item Level: 82", "Requires: Level 72, 115 Dex, 46 Int", "Quality: +20%", "+12 to Level of all Melee Skills", "10 uses remaining", "-20% to Fire Resistance", "2 additional Projectiles" })
+{
+    var fixedBound = new EvaluationFilter(new ItemLine(text,"Property")); fixedBound.Preset(true);
+    Check(!fixedBound.AllowsBroad && fixedBound.Minimum == fixedBound.CopiedValue?.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture), "Broad preserves fixed stat: " + text);
+}
 Check(criticalBound.Minimum=="1.05","Fractional critical chance retains decimal broad bounds");
 var dpsItem=ItemParser.Parse("Item Class: Bows\nRarity: Rare\nDPS Test\nTest Bow\n--------\nPhysical Damage: 100-200\nElemental Damage: 10-30 (fire), 20-40 (cold)\nAttacks per Second: 2.00")!;
 var dpsLines=ItemAnalysis.From(dpsItem).Lines;
@@ -349,6 +371,11 @@ var notePath=Path.Combine(Path.GetTempPath(),"ExileLens-note-"+Guid.NewGuid(),"n
 try { var store=new ItemBookmarks(notePath); store.Save(defaultRing,null); store.UpdateNotes(store.Read()[0],"Compare after crafting"); store.Save(defaultRing,null); Check(new ItemBookmarks(notePath).Read()[0].Notes=="Compare after crafting","Rebookmarking retains persisted notes"); }
 finally { File.Delete(notePath); Directory.Delete(Path.GetDirectoryName(notePath)!); }
 await LiveTradeChecks.Run(Check);
+Check(SocketAugments.Match("Body Armours","Skills have 10% chance to not remove Charges but still count as consuming them") == "Idol of Eramir", "Socket catalogue resolves body armour idol");
+Check(SocketAugments.Match("Bows","Skills have 10% chance to not remove Charges but still count as consuming them") == null, "Socket catalogue respects equipment category");
+Check(SocketAugments.Icon("Idol of Eramir")?.StartsWith("https://web.poecdn.com/") == true, "Socket catalogue provides trusted artwork without market request");
+Check(new SocketArtworkCatalog().Resolve(new ItemSocket(0,"rune","Greater Iron Rune",null,true)).IconUrl != null, "Named trade socket resolves bundled artwork");
+Check(new SocketArtworkCatalog().Resolve(new ItemSocket(0,"rune","Unrecognised socket",null,true)).IconUrl == null, "Unknown sockets never borrow artwork");
 var runeCatalog = new[] { new EconomyRow("Greater Iron Rune","","",5,"Exalted Orb",null,null),new EconomyRow("Perfect Iron Rune","","",50,"Exalted Orb",null,null),new EconomyRow("Iron Rune","","",1,"Exalted Orb",null,null), new EconomyRow("Countess Seske's Rune of Archery","","",80,"Exalted Orb",null,null) };
 Check(RuneNames.Match("GREATER IRON RUNE",90,runeCatalog)?.Row.Value == 5, "Rune OCR exact names preserve tier");
 Check(RuneNames.Match("2x Greater Iron Rune",90,runeCatalog)?.PriceLabel.Contains("10 Exalted") == true, "Rune choices include stack total");

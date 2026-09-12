@@ -10,6 +10,8 @@ public static class ItemSockets
         if (!match.Success) return Array.Empty<ItemSocket>();
         int count = match.Groups[1].Value.Split(new[] { ' ', '-' },StringSplitOptions.RemoveEmptyEntries).Length;
         var runes = ItemAnalysis.From(item).Lines.Where(l=>l.Kind == "Rune").ToArray();
+        if(runes.Length==0)
+            return Enumerable.Range(0,Math.Min(count,12)).Select(i=>new ItemSocket(i,"rune",null,null,false,"No socket effects in copied item text.",true)).ToArray();
         // Clipboard effects can be totals across sockets, not one line per socket.
         if (count == 2 && runes.Length == 1 && runes[0].Text == "36% increased Armour, Evasion and Energy Shield")
             return Enumerable.Range(0, 2).Select(i => new ItemSocket(i, "rune", "Iron Rune family", null, true,
@@ -27,6 +29,8 @@ public static class ItemSockets
                 "16% increased Armour, Evasion and Energy Shield" => "Iron Rune",
                 "18% increased Armour, Evasion and Energy Shield" => "Greater Iron Rune",
                 "20% increased Armour, Evasion and Energy Shield" => "Perfect Iron Rune",
+                "Adds 1 to 30 Lightning Damage" => "Greater Storm Rune",
+                "Attacks with this Weapon Penetrate 25% Elemental Resistances" => "Soul Core of Topotante",
                 _ => null
             };
             if (item.ItemClass == "Bows") name ??= effect switch {
@@ -34,6 +38,7 @@ public static class ItemSockets
                 "Bow Attacks fire an additional Arrow" => "Countess Seske's Rune of Archery",
                 _ => null
             };
+            name=SocketAugments.Match(item.ItemClass,effect) ?? name;
             return new ItemSocket(i,"rune",name,null,true,effect,true);
         }).ToArray();
     }

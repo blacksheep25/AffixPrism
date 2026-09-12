@@ -77,6 +77,9 @@ public partial class EvaluationWindow
     }
     private void RefreshFilterSummary()
     {
+        RefreshBoundsVisibility();
+        RefreshFilterChoices();
+        RefreshHiddenMods();
         UndoFilterButton.IsEnabled=filterUndo.Count>0;
         var active=drafts.Where(x=>x.Filter.Enabled).ToArray();
         ActiveFilters.Header=$"Active filters ({active.Select(x=>x.Filter.GroupId).Distinct().Count()})";

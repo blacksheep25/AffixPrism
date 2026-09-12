@@ -36,6 +36,9 @@ internal sealed class RuneHelperWindow : Window
     private DateTimeOffset nextRefresh;
     private DateTimeOffset nextScan;
     private bool running,busy,closing;
+    private ContentControl? embeddedHost;
+    private object? sharedContent;
+    private Window PresentationWindow => embeddedHost!=null ? Window.GetWindow(embeddedHost) ?? this : this;
     private int generation;
     private string ConfigPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"ExileLens","rune-region.json");
     [StructLayout(LayoutKind.Sequential)] private struct RECT { public int Left,Top,Right,Bottom; }
@@ -68,13 +71,14 @@ internal sealed class RuneHelperWindow : Window
         layout.RowDefinitions.Add(new RowDefinition { Height=new GridLength(1,GridUnitType.Star) });
         var header=new DockPanel { Background=Background,Margin=new Thickness(0,0,0,10) };
         var close=new Button { Content="✕",ToolTip="Close helper and pause scanning",Padding=new Thickness(9,5,9,5),VerticalAlignment=VerticalAlignment.Top };
-        close.Click+=(_,_)=>Close(); DockPanel.SetDock(close,Dock.Right); header.Children.Add(close);
+        close.Click+=(_,_)=> { Stop(); PresentationWindow.Hide(); }; DockPanel.SetDock(close,Dock.Right); header.Children.Add(close);
         var title=new TextBlock { Text="Rune choice prices",FontSize=22,Foreground=Brushes.Khaki,Padding=new Thickness(0,5,0,8),Cursor=System.Windows.Input.Cursors.SizeAll };
-        title.MouseLeftButtonDown+=(_,e)=> { if(e.LeftButton==System.Windows.Input.MouseButtonState.Pressed) { DragMove(); e.Handled=true; } };
+        title.MouseLeftButtonDown+=(_,e)=> { if(e.LeftButton==System.Windows.Input.MouseButtonState.Pressed) { PresentationWindow.DragMove(); e.Handled=true; } };
         header.Children.Add(title); layout.Children.Add(header);
         var scroll=new ScrollViewer { Content=body,VerticalScrollBarVisibility=ScrollBarVisibility.Auto };
         Grid.SetRow(scroll,1); layout.Children.Add(scroll);
         Content=new Border { Child=layout,Background=Background,BorderBrush=new SolidColorBrush(Color.FromRgb(107,92,48)),BorderThickness=new Thickness(1),Padding=new Thickness(16) };
+        sharedContent=Content;
         timer.Tick+=async (_,_)=>await Scan();
         Closing+=(_,e)=> { Stop(); if(!closing) { e.Cancel=true; Hide(); } };
         Closed+=(_,_)=> { lifetime.Cancel(); overlay.Close(); };
@@ -83,6 +87,7 @@ internal sealed class RuneHelperWindow : Window
     }
     public void Open(string selectedLeague)
     {
+        if(embeddedHost!=null) { embeddedHost.Content=null; embeddedHost=null; Content=sharedContent; }
         Stop();
         if(league!=selectedLeague) { league=selectedLeague; catalog.Clear(); results.ItemsSource=null; fetched=default; nextRefresh=default; priceStatus.Text="Prices not loaded for "+league; }
         Show(); Activate();
@@ -95,18 +100,26 @@ internal sealed class RuneHelperWindow : Window
         debug.Text="96% · 2x Runic Alloy\n92% · Greater Iron Rune";
         results.ItemsSource=new[] { "Runic Alloy · UI fixture price", "Greater Iron Rune · UI fixture price" };
     }
+    public void Embed(ContentControl host,string selectedLeague)
+    {
+        Stop();
+        if(league!=selectedLeague) { league=selectedLeague; catalog.Clear(); results.ItemsSource=null; fetched=default; nextRefresh=default; priceStatus.Text="Prices not loaded for "+league; }
+        if(embeddedHost!=null) embeddedHost.Content=null;
+        Hide(); Content=null; embeddedHost=host; host.Content=sharedContent;
+        if(catalog.Count==0 && !test) _=LoadPrices();
+    }
     private void Stop() { running=false; generation++; timer.Stop(); overlay.Hide(); status.Text="Paused · no screen capture"; }
     private void RegionLabel() => regionText.Text=region is { } r ? $"Region: {r.Width} × {r.Height} px · reselect if you move the game or change UI scale." : "No region selected.";
     private void SelectRegion(object sender,RoutedEventArgs e)
     {
-        Stop(); Hide();
+        Stop(); PresentationWindow.Hide();
         var selector=new RuneRegionSelector(); selector.ShowDialog();
         if(selector.Region is { } r)
         {
             if(r.Width is <50 or >1600 || r.Height is <30 or >1200) status.Text="Choose only the names: 50–1600 px wide and 30–1200 px high.";
             else { region=r; if(!test) try { Directory.CreateDirectory(Path.GetDirectoryName(ConfigPath)!); File.WriteAllText(ConfigPath,JsonSerializer.Serialize(r)); } catch(Exception ex) when(ex is IOException or UnauthorizedAccessException) { status.Text="Region selected, but could not be saved."; } }
         }
-        RegionLabel(); Show(); Activate();
+        RegionLabel(); PresentationWindow.Show(); PresentationWindow.Activate();
     }
     private async void StartScanning(object sender,RoutedEventArgs e)
     {
@@ -114,7 +127,7 @@ internal sealed class RuneHelperWindow : Window
         int version=generation;
         if(catalog.Count==0) await LoadPrices();
         if(catalog.Count==0 || closing || version!=generation) return;
-        running=true; generation++; status.Text="Scanning · return to POE2"; Hide(); timer.Start();
+        running=true; generation++; status.Text="Scanning · return to POE2"; PresentationWindow.Hide(); timer.Start();
     }
     private async Task LoadPrices()
     {

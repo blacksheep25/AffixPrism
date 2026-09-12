@@ -53,13 +53,21 @@ public partial class MainWindow : Window
         settings = smoke ? new Settings() : SettingsStore.Load(out loadError);
         tail = new LogTail(settings.LogPath);
         InitializeComponent();
-        Tabs.SelectedItem = ItemTab;
+        InitializeMarketBrowser();
+        LoadCharacter();
+        Tabs.SelectedItem = HomeTab;
         expedition = new ExpeditionWindow { Resources = Resources };
         expedition.Dismissed += () => dismissed = true;
         evaluation = new EvaluationWindow(smoke) { Resources = Resources, IsTestMode = smoke };
         evaluation.BookmarkOpened += saved => { ShowItem(saved); evaluation.Show(); evaluation.Activate(); _ = LookupEstimateAsync(); };
         evaluation.HistoryRequested += NavigateRecent;
         evaluation.PinRequested += () => PinComparison(this, new RoutedEventArgs());
+        evaluation.ComparePinnedRequested += () =>
+        {
+            if (currentItem == null) return;
+            if (comparisonBaseline == null) { PinComparison(this, new RoutedEventArgs()); evaluation.SetQuote("Comparison pinned. Inspect another item, then choose Pin / compare items."); return; }
+            new ListingComparisonWindow(comparisonBaseline, currentItem) { Resources = Resources }.Show();
+        };
         evaluation.FiltersChanged += ResetQuote;
         evaluation.Dismissed += ResetQuote;
         evaluation.ImportRequested += ImportComparableListings;
@@ -88,7 +96,7 @@ public partial class MainWindow : Window
         ready = true;
         SourceInitialized += OnSourceInitialized;
         Closing += OnClosing;
-        timer.Tick += (_, _) => PollLog();
+        timer.Tick += (_, _) => { PollLog(); if(IsVisible && Tabs.SelectedItem == HomeTab) UpdateHome(); };
         if (!smoke) { PollLog(); timer.Start(); }
         if (!smoke) Loaded += async (_, _) => await LoadLeaguesAsync();
     }
@@ -283,13 +291,19 @@ public partial class MainWindow : Window
     {
         if (checking) return;
         ShowItem(null);
-        ShowManual();
-        Tabs.SelectedItem = ItemTab;
         try
         {
             var item = System.Windows.Clipboard.ContainsText() ? ItemParser.Parse(System.Windows.Clipboard.GetText()) : null;
             ShowItem(item);
-            if (item != null) _ = LookupEstimateAsync();
+            if (item != null)
+            {
+                Hide();
+                evaluation.FitToScreen(!double.IsFinite(evaluation.Left));
+                evaluation.Show();
+                evaluation.Activate();
+                _ = LookupEstimateAsync();
+            }
+            else { ShowManual(); Tabs.SelectedItem = HomeTab; }
         }
         catch (ExternalException) { Notice.Text = "Clipboard is busy. Copy the item again and retry."; }
     }
@@ -312,7 +326,7 @@ public partial class MainWindow : Window
         }
         ItemName.Text = item.Name;
         ItemMeta.Text = $"{item.Rarity} · {item.ItemClass}";
-        ItemDetails.Text = item.Details;
+        ItemDetails.Text = item.Details; MainItemCard.Item = item;
         PopulateWorkspace(item);
         SearchStatus.Text = item.Rarity is "Rare" or "Magic" ? "Live comparable offers appear in the evaluation window. Select modifiers to narrow the comparison." : "Estimates are indicative. Compare variants and rolls before pricing your item.";
         Notice.Text = "Item ready to search";
@@ -374,7 +388,7 @@ public partial class MainWindow : Window
     private void PinChanged(object sender, RoutedEventArgs e) { settings.Pinned = PinCheck.IsChecked == true; Persist(); }
     private void ApplyOverlayOpacity(double value)
     {
-        Opacity = value;
+        Opacity = 1;
         evaluation.Opacity = value;
         expedition.Opacity = value;
     }
@@ -388,6 +402,13 @@ public partial class MainWindow : Window
     private void TabChanged(object sender, SelectionChangedEventArgs e)
     {
         if (ready && ReferenceEquals(e.Source, Tabs)) ApplyOverlayOpacity(OpacitySlider.Value);
+        if (ready && ReferenceEquals(e.Source, Tabs) && Tabs.SelectedItem == PricesTab && !smoke) _ = LoadBrowserPrices();
+        if (ready && ReferenceEquals(e.Source,Tabs))
+        {
+            if(Tabs.SelectedItem==ExpeditionTab) RenderShortlist();
+            if(Tabs.SelectedItem==GuidesTab) LoadGuide(sender,e);
+            if(Tabs.SelectedItem==RuneTab) { runeHelper ??= new RuneHelperWindow(economy,smoke) { Resources=Resources }; runeHelper.Embed(RuneHost,settings.League); }
+        }
     }
     private void BrowseLog(object sender, RoutedEventArgs e)
     {
@@ -484,7 +505,8 @@ public partial class MainWindow : Window
     public void RunSmokeTest()
     {
         Directory.CreateDirectory("artifacts");
-        if (Tabs.Items[0] != ItemTab || Tabs.SelectedItem != ItemTab) throw new Exception("Item check is not the default first tab");
+        if (Tabs.Items[0] != HomeTab || Tabs.SelectedItem != HomeTab) throw new Exception("Home is not the default first page");
+        Tabs.SelectedItem = ItemTab;
         double originalLeft = Left, originalTop = Top;
         TitleDragHandle.RaiseEvent(new DragDeltaEventArgs(40, 25) { RoutedEvent = Thumb.DragDeltaEvent });
         if (Math.Abs(Left - originalLeft - 40) > .1 || Math.Abs(Top - originalTop - 25) > .1) throw new Exception("Title drag did not move the window");
@@ -576,10 +598,10 @@ public partial class MainWindow : Window
         LeagueBox.IsDropDownOpen = false;
         SetLeagueChoices(Leagues.Bundled, "Forbidden Rites");
         OpacitySlider.Value = .6;
-        if (Math.Abs(Opacity - .6) > .001 || Math.Abs(evaluation.Opacity - .6) > .001 || Math.Abs(expedition.Opacity - .6) > .001 || settings.Opacity != .6) throw new Exception("Opacity preview does not apply to all windows");
+        if (Opacity != 1 || Math.Abs(evaluation.Opacity - .6) > .001 || Math.Abs(expedition.Opacity - .6) > .001 || settings.Opacity != .6) throw new Exception("Overlay opacity affected the normal main window or missed an overlay");
         Capture("artifacts/overlay-settings.png");
         Tabs.SelectedItem = ItemTab;
-        if (Math.Abs(Opacity - .6) > .001) throw new Exception("Overlay opacity not restored outside Settings");
+        if (Opacity != 1) throw new Exception("Main window should remain opaque outside Settings");
         Tabs.SelectedItem = SettingsTab;
         Width = 600; Height = 560; Capture("artifacts/settings-small.png");
         Width = 720; Height = 760;

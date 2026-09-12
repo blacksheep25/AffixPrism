@@ -34,6 +34,7 @@ public partial class EvaluationWindow : Window
     public event Action? RefreshRequested;
     public event Action? ImportRequested;
     public event Action? PinRequested;
+    public event Action? ComparePinnedRequested;
     private sealed record ViewPreferences(int Currency, int Status, int Age, bool Broad, bool ListingsExpanded = true);
     private static string PreferencesPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ExileLens", "evaluation-ui.json");
     public EvaluationWindow(bool smoke = false)
@@ -46,12 +47,16 @@ public partial class EvaluationWindow : Window
         SellerMode.SelectionChanged += (_, _) => InvalidatePrices();
         ListingAge.SelectionChanged += (_, _) => InvalidatePrices();
         var menu = new ContextMenu { Style = (Style)FindResource(typeof(ContextMenu)), ItemContainerStyle = (Style)FindResource(typeof(MenuItem)) };
-        var pin = new MenuItem { Header = "Pin for comparison" }; pin.Click += (_, _) => { PinRequested?.Invoke(); ResultStatus.Text = "Item pinned · open Compare from Settings"; };
+        var pin = new MenuItem { Header = "Pin for comparison" }; pin.Click += (_, _) => { PinRequested?.Invoke(); ResultStatus.Text = "Pinned. Inspect another item, then choose Compare with pinned item."; };
+        var comparePinned = new MenuItem { Header = "Compare with pinned item" }; comparePinned.Click += (_, _) => ComparePinnedRequested?.Invoke();
         var reset = new MenuItem { Header = "Reset default filters" }; reset.Click += ResetDefaultFilters;
         var crafting = new MenuItem { Header = "Search as crafting base" }; crafting.Click += CraftingBaseFilters;
         var wiki = new MenuItem { Header = "Open item wiki" };
         wiki.Click += (_,_) => { if(item != null) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://www.poe2wiki.net/wiki/" + Uri.EscapeDataString(item.Rarity == "Unique" ? item.Name : item.BaseType)) { UseShellExecute = true }); };
-        menu.Items.Add(pin); menu.Items.Add(reset); menu.Items.Add(crafting); menu.Items.Add(wiki); ItemFrame.ContextMenu = menu;
+        menu.Items.Add(pin); menu.Items.Add(comparePinned); menu.Items.Add(reset); menu.Items.Add(crafting); menu.Items.Add(wiki); ItemFrame.ContextMenu = menu;
+        var bookmark = new MenuItem { Header="Bookmark item" }; bookmark.Click += BookmarkItem; menu.Items.Add(bookmark);
+        var library = new MenuItem { Header="Bookmarks" }; library.Click += OpenBookmarks; menu.Items.Add(library);
+        var screenPin = new MenuItem { Header="Pin to screen" }; screenPin.Click += PinToScreen; menu.Items.Add(screenPin);
         ItemFrame.ToolTip = "Right-click: reset filters, open wiki, comparison actions";
         ListingsPanel.Expanded += (_, _) => { if (!building) { SavePreferences(); QueueContentResize(); } };
         ListingsPanel.Collapsed += (_, _) => { if (!building) { SavePreferences(); QueueContentResize(); } };
@@ -83,7 +88,7 @@ public partial class EvaluationWindow : Window
         ItemHeaderArt.Url = null;
         Caption.Text = "Exile Lens · Evaluate" + (string.IsNullOrWhiteSpace(league) ? " · choose league" : " · " + league);
         drafts.Clear();
-        ItemRows.Children.Clear(); SideRows.Children.Clear();
+        ItemRows.Children.Clear(); SideRows.Children.Clear(); compactModRows.Clear(); showHiddenMods=true;
         // Detach reusable controls before rebuilding their rows.
         foreach (var control in new FrameworkElement[] { level, quality, maxLevel, maxQuality, corrupted })
             if (control.Parent is Panel panel) panel.Children.Remove(control);
@@ -97,7 +102,7 @@ public partial class EvaluationWindow : Window
         bool quest=ItemPresentation.IsQuest(value);
         ItemFrame.Height=quest ? 48 : double.NaN;
         EstimatePanel.Visibility=quest ? Visibility.Collapsed : Visibility.Visible;
-        ((UIElement)ActiveFilters.Parent).Visibility=quest ? Visibility.Collapsed : Visibility.Visible;
+        ((UIElement)ActiveFilters.Parent).Visibility=Economy.UsesEquipmentListings(value) ? Visibility.Visible : Visibility.Collapsed;
         ItemBase.Visibility=Economy.UsesEquipmentListings(value) || ItemPresentation.IsGem(value) ? Visibility.Visible : Visibility.Collapsed;
         bool exchange = Economy.UsesExchange(value);
         bool equipment = Economy.UsesEquipmentListings(value);
@@ -124,6 +129,7 @@ public partial class EvaluationWindow : Window
         int groupId = 0;
         foreach (var line in analysis.Lines)
         {
+            if (line.Kind == "State" && line.Text == "Desecrated") continue;
             int currentGroup = groupId++;
             var row = new Grid { Margin = new Thickness(0, previousKind != null && line.Kind != previousKind ? 7 : 1, 0, 1) };
             previousKind = line.Kind;
@@ -149,7 +155,7 @@ public partial class EvaluationWindow : Window
                     TextBox minimum = new() { Text = filter.Minimum }, maximum = new();
                     var fields = RangeFields(minimum, maximum); fields.Margin = new Thickness(0, index > 0 ? 2 : 0, 0, 0);
                     string valueName = ValueName(line.Text, index, numberCount);
-                    minimum.ToolTip = $"Minimum {valueName}"; maximum.ToolTip = $"Maximum {valueName}";
+                    minimum.ToolTip = $"Minimum {valueName}" + (filter.AllowsBroad ? "" : "\nKept exact in Broad mode; edit manually to change."); maximum.ToolTip = $"Maximum {valueName}";
                     if (index == 0) fieldStack.Children.Add(fields);
                     else
                     {
@@ -160,8 +166,8 @@ public partial class EvaluationWindow : Window
                     minimum.TextChanged += (_, _) => { filter.Minimum = minimum.Text; InvalidatePrices(); };
                     maximum.TextChanged += (_, _) => { filter.Maximum = maximum.Text; InvalidatePrices(); };
                 }
-                var sideGroup = new StackPanel { Margin = new Thickness(0,0,0,8) };
-                sideGroup.Children.Add(new TextBlock { Text = line.Text, TextWrapping = TextWrapping.Wrap, Foreground = ItemTextStyle.Brush(line), FontSize = 10, Margin = new Thickness(4,3,4,3) });
+                var sideGroup = new StackPanel { Margin = new Thickness(0,0,0,8), Tag = currentGroup };
+                sideGroup.Children.Add(new TextBlock { Text = line.Text + (group[0].Filter.AllowsBroad ? "" : " · exact"), TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(Color.FromRgb(188,194,204)), FontSize = 11, Margin = new Thickness(4,5,4,5) });
                 sideGroup.Children.Add(fieldStack); SideRows.Children.Add(sideGroup);
                 if (numberCount > 1)
                 {
@@ -187,6 +193,7 @@ public partial class EvaluationWindow : Window
                 }
             }
             ItemRows.Children.Add(row);
+            if(equipment && line.Kind is "Item text" or "Implicit" or "Rune" or "Enchant") compactModRows.Add((row,currentGroup,line.Text));
         }
         if (!savedDrafts.ContainsKey(DraftKey))
         {
@@ -366,6 +373,17 @@ public partial class EvaluationWindow : Window
         EstimateSource.Text = item != null && ItemAnalysis.From(item).Unidentified ? "Unidentified base-item listings · hidden identity and modifiers cannot be valued reliably." : "No reliable item estimate · not enough sufficiently similar listings. Use Match modifiers to narrow the search.";
         var similar = item == null ? null : SimilarItems.Estimate(item, result);
         if(similar!=null && !similar.Price.HasValue) EstimateSource.Text=similar.Explanation;
+        if(similar?.Price==null && result.Rows.Count>0)
+        {
+            var asking=result.Rows.Select(r=>new { Row=r, Price=SimilarItems.ConvertedPrice(r,result) })
+                .Where(r=>r.Price.HasValue).GroupBy(r=>r.Row.Account.Trim(),StringComparer.OrdinalIgnoreCase)
+                .Select(g=>g.Min(r=>r.Price!.Value)).OrderBy(p=>p).ToArray();
+            if(asking.Length>0)
+            {
+                Estimate.Text=$"Offers: {asking.First():0.##}–{asking.Last():0.##} {result.Currency}";
+                EstimateSource.Text=$"Search reference only · {asking.Length} sellers · not an estimate of your item.\nOther rolls differ too much for a reliable valuation. Compare the offers below.";
+            }
+        }
         averageListing = null; AverageCompare.Visibility = Visibility.Collapsed;
         if (similar?.Price is { } recommended && similar.Average is { } average)
         {
@@ -377,7 +395,12 @@ public partial class EvaluationWindow : Window
         ResultStatus.Text = (similar?.Explanation ?? "") + "\n" + $"{result.Source} · captured {result.CapturedAt.ToLocalTime():dd MMM HH:mm}\n{result.Rows.Count} matching listings · asking prices, not completed sales\n{(result.Source.Contains("BROADER RESULTS") ? "Broader base-item comparison · your selected filters found no listings" : drafts.Any(x => x.Filter.Enabled) ? drafts.Count(x => x.Filter.Enabled) + " selected numeric filters" : "Base and rarity only · select modifiers to narrow results")}";
         ResultCount.Text = result.TotalMatches is { } total ? $"{result.Rows.Count} shown · {result.FetchedCount ?? 0} fetched · {total:N0} found on trade" : $"{result.Rows.Count} shown";
         if(item!=null) { var coverage=PriceDiagnostics.From(item,result); ResultCount.ToolTip=coverage.Summary; ResultStatus.Text+="\n"+coverage.Summary; }
-        Variants.ItemsSource = result.Rows.OrderByDescending(r => item == null ? 0 : SimilarItems.Score(item,r.Item)).Take(100).ToArray();
+        Variants.ItemsSource = result.Rows.OrderBy(r => SimilarItems.ConvertedPrice(r,result).HasValue ? 0 : 1)
+            .ThenBy(r => SimilarItems.ConvertedPrice(r,result) ?? decimal.MaxValue)
+            .ThenBy(r=>r.Listing.Price.Currency).ThenBy(r=>r.Listing.Price.Amount).Take(100).ToArray();
+        ListingsPanel.Header=result.Rows.Count>0 ? $"{result.Rows.Count} offers · click to compare with yours" : "No matching offers · search options";
+        ListingsPanel.IsExpanded=true;
+        QueueContentResize();
 
         EmptyResults.Text = result.Rows.Count == 0 ? result.TotalMatches > 0 ? "Trade found offers, but none of the fetched sample passed the local filters. Open Trade query to inspect all results." : "No offers found for this search." : "";
     }
@@ -512,7 +535,7 @@ public partial class EvaluationWindow : Window
         var market = ComparableMarket.Parse(JsonSerializer.Serialize(dataset), now);
         var result = market.Search(BuildComparableRequest("UI price test"), now);
         SetComparableResult(result);
-        if (result.Rows.Count != 3 || result.Median != 30 || Estimate.Text != "—") throw new Exception("UI filter-to-price flow failed");
+        if (result.Rows.Count != 3 || result.Median != 30 || Estimate.Text != "Offers: 20–40 Exalted Orb" || !ListingsPanel.IsExpanded || !EstimateSource.Text.Contains("not an estimate")) throw new Exception("UI filter-to-price flow failed");
         lifeRow.Min.Text = "121";
         if (Estimate.Text != "—" || Variants.ItemsSource != null) throw new Exception("Filter edit retained stale prices");
         var narrower = market.Search(BuildComparableRequest("UI price test"), now);
@@ -522,12 +545,13 @@ public partial class EvaluationWindow : Window
         if (!Estimate.Text.Contains("30 Exalted Orb")) throw new Exception("Similar listings did not yield a recommendation");
         SetItem(ItemParser.Parse("Item Class: Rings\nRarity: Rare\nOther Ring\nGold Ring\n--------\n+50 to Dexterity")!, "UI price test");
         SetComparableResult(result);
-        if (Estimate.Text != "—") throw new Exception("Unrelated base listings presented as an item estimate");
+        if (!Estimate.Text.StartsWith("Offers:") || !EstimateSource.Text.Contains("not an estimate")) throw new Exception("Unrelated base listings presented as an item estimate");
         SetPreferredCurrency("Divine Orb");
         if (Variants.ItemsSource != null || market.Search(BuildComparableRequest("UI price test"), now).Rows.Count != 0) throw new Exception("Currency switch retained incompatible prices");
     }
     public void VerifyScrollableLayout()
     {
+        ShowAllBounds.IsChecked = true; RefreshBoundsVisibility();
         Width = 480; Height = 550; UpdateLayout();
         foreach (var expander in valueExpanders) expander.IsExpanded = true;
         UpdateLayout();
@@ -557,6 +581,24 @@ public partial class EvaluationWindow : Window
         if (footer.Y + CheckPricesButton.ActualHeight > ActualHeight) throw new Exception("Expanded listings push Search off screen");
         ListingsPanel.IsExpanded = false;
         BodyScroll.ScrollToTop(); UpdateLayout();
+    }
+    private void ToggleAllBounds(object sender, RoutedEventArgs e) => RefreshBoundsVisibility();
+    public void VerifyBoundsVisibility()
+    {
+        ShowAllBounds.IsChecked = false;
+        if (drafts.Any(d => d.Filter.Enabled)) throw new Exception("Expected a broad default search");
+        RefreshBoundsVisibility();
+        if (SideRows.Children.OfType<FrameworkElement>().Any(g => g.Visibility == Visibility.Visible)) throw new Exception("Unselected bounds still clutter the filter panel");
+        int first = drafts[0].Filter.GroupId;
+        rowToggles[first]();
+        if (SideRows.Children.OfType<FrameworkElement>().Count(g => g.Visibility == Visibility.Visible) != 1) throw new Exception("Selecting a stat did not reveal its bounds");
+        rowToggles[first]();
+    }
+    private void RefreshBoundsVisibility()
+    {
+        foreach (FrameworkElement group in SideRows.Children)
+            group.Visibility = ShowAllBounds.IsChecked == true || drafts.Any(d => d.Filter.GroupId.Equals(group.Tag) && d.Filter.Enabled) ? Visibility.Visible : Visibility.Collapsed;
+        BoundsHint.Visibility = drafts.Any(d => d.Filter.Enabled) || ShowAllBounds.IsChecked == true ? Visibility.Collapsed : Visibility.Visible;
     }
     public void VerifyContentSizing()
     {
@@ -617,7 +659,7 @@ public partial class EvaluationWindow : Window
             double growth = Math.Min(deficit, Math.Max(0, limit - Height));
             Height += growth;
             if (ListingsPanel.IsExpanded && deficit > growth)
-                ListingsScroll.MaxHeight = Math.Max(64, ListingsScroll.MaxHeight - (deficit - growth));
+                ListingsScroll.MaxHeight = Math.Max(64, Math.Min(ListingsScroll.ActualHeight, ListingsScroll.MaxHeight) - (deficit - growth));
             UpdateLayout();
         }
         if (BodyScroll.ScrollableHeight <= 1) BodyScroll.ScrollToTop();

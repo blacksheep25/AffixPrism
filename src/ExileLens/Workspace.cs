@@ -45,7 +45,7 @@ public partial class MainWindow
     {
         FilterBase.Text = item.BaseType;
         FilterLevel.Clear(); FilterQuality.Clear(); FilterCorrupted.IsChecked = null;
-        ComparisonRight.Text = item.Details;
+        ComparisonRight.Text = item.Details; MainComparisonRight.Item = item;
         if (comparisonBaseline != null) ComparisonChanges.Text = ItemComparison.Describe(comparisonBaseline, item);
         if (!selectingRecent)
         {
@@ -64,6 +64,7 @@ public partial class MainWindow
         ResetQuote();
         if (currentItem == null) return;
         var item = currentItem;
+        WarmSocketArtwork(item);
         if(ItemPresentation.IsQuest(item)) { evaluation.SetQuote("Quest item · inspect or open the wiki"); return; }
         var request = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
         quoteRequest = request;
@@ -154,10 +155,10 @@ public partial class MainWindow
     {
         if (currentItem == null) { Notice.Text = "Check an item before pinning a comparison."; return; }
         comparisonBaseline = currentItem;
-        ComparisonLeft.Text = currentItem.Details;
+        ComparisonLeft.Text = currentItem.Details; MainComparisonLeft.Item = currentItem;
         ComparisonChanges.Text = ItemComparison.Describe(currentItem, currentItem);
         SaveSession();
-        Notice.Text = "Comparison pinned. Check another item, then open Compare.";
+        Notice.Text = "Comparison pinned. Inspect another item and use Pin / compare items in its menu.";
     }
     private void TrackLoot(object sender, RoutedEventArgs e)
     {

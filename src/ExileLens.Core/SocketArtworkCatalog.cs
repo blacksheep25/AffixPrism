@@ -20,6 +20,6 @@ public sealed class SocketArtworkCatalog
     public ItemSocket Resolve(ItemSocket socket)
     {
         if(ItemArtwork.SafeUrl(socket.IconUrl) is {} own) return socket with { IconUrl=own };
-        return socket with { IconUrl=socket.Occupied==true && socket.Name!=null && icons.TryGetValue(socket.Name.Trim(),out var url) ? url : null };
+        return socket with { IconUrl=socket.Occupied==true && socket.Name!=null ? (icons.TryGetValue(socket.Name.Trim(),out var url) ? url : SocketAugments.Icon(socket.Name)) : null };
     }
 }

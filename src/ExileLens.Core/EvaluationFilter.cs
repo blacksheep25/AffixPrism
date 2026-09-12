@@ -13,6 +13,9 @@ public sealed class EvaluationFilter
     public bool WholeNumber => Regex.IsMatch(Text, @"(?i)to level of .*skills|^(?:Item Level|Rune Sockets|Sockets):|^Requires:|to (?:Strength|Dexterity|Intelligence|all Attributes|Accuracy Rating)|to maximum (?:Life|Mana)$");
     public string Minimum { get; set; } = "";
     public string Maximum { get; set; } = "";
+    // Broad matching is for variable performance rolls, not eligibility or discrete mechanics.
+    public bool AllowsBroad => CopiedValue > 0 && !Regex.IsMatch(Text,
+        @"(?i)^(?:Requires:|Item Level:|Level:|Quality:|Sockets:|Rune Sockets:|Stack Size:)|to level of .*skills|(?:additional|maximum) (?:arrows?|projectiles?|charges?|sockets?)|(?:arrows?|projectiles?) (?:additional|fired)|uses remaining");
     public EvaluationFilter(ItemLine line, int valueIndex = 0, int groupId = 0)
     {
         Text = line.Text; Kind = line.Kind; ValueIndex = valueIndex; GroupId = groupId;
@@ -23,7 +26,7 @@ public sealed class EvaluationFilter
     public void Preset(bool broad)
     {
         if (CopiedValue is not { } value) return;
-        decimal minimum = broad ? value - Math.Abs(value) * .1m : value;
+        decimal minimum = broad && AllowsBroad ? value - Math.Abs(value) * .1m : value;
         // Round up to retain the same minimum constraint for discrete stats.
         if (WholeNumber) minimum = decimal.Ceiling(minimum);
         Minimum = minimum.ToString("0.##", CultureInfo.InvariantCulture);

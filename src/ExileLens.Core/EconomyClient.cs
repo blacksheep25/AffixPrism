@@ -27,7 +27,7 @@ public sealed class EconomyClient(HttpClient http, string cacheDirectory)
             var core = await GetAsync($"/poe2/api/economy/exchange/current/overview?league={Uri.EscapeDataString(league)}&type=Currency", token);
             currency = Economy.PrimaryCurrency(core.Cache.Json);
         }
-        return new(Economy.Parse(response.Cache.Json, category.Exchange, currency), response.Cache.FetchedAt, response.Cached, response.Stale);
+        return new(Economy.Parse(response.Cache.Json, category.Exchange, currency).Select(r=>r with {CategoryType=category.Type,ExchangeCategory=category.Exchange}).ToArray(), response.Cache.FetchedAt, response.Cached, response.Stale);
     }
     private async Task<(Cache Cache, bool Cached, bool Stale)> GetAsync(string path, CancellationToken token, TimeSpan? maximumAge = null)
     {

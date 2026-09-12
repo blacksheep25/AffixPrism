@@ -24,7 +24,7 @@ public partial class MainWindow
             areas.AddRange(state.Areas); loot.AddRange(state.Loot); recent.AddRange(state.Recent);
             AreaRows.ItemsSource = areas.ToArray(); LootRows.ItemsSource = loot.ToArray(); RecentItems.ItemsSource = recent.ToArray();
             comparisonBaseline = state.Baseline;
-            if (comparisonBaseline != null) ComparisonLeft.Text = comparisonBaseline.Details;
+            if (comparisonBaseline != null) { ComparisonLeft.Text = comparisonBaseline.Details; MainComparisonLeft.Item = comparisonBaseline; }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {

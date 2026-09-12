@@ -32,6 +32,7 @@ public sealed class SocketStrip : StackPanel
                 return new Border { Child=panel,Width=300,Padding=new Thickness(12),Background=new SolidColorBrush(Color.FromRgb(18,20,19)),BorderBrush=Brushes.DarkKhaki,BorderThickness=new Thickness(1) };
             }
             var contents=new Grid();
+            if(socket.Occupied==false) contents.Children.Add(new Image { Source=new System.Windows.Media.Imaging.BitmapImage(new System.Uri("pack://application:,,,/ExileLens;component/Assets/empty-socket.png")), Width=38,Height=38,Stretch=Stretch.Uniform });
             contents.Children.Add(new TextBlock { Text=socket.Occupied == null ? "?" : socket.Occupied == false ? "" : "◆", Foreground=Brushes.LightSteelBlue, HorizontalAlignment=HorizontalAlignment.Center, VerticalAlignment=VerticalAlignment.Center, FontSize=20 });
             contents.Children.Add(new RemoteItemIcon { Url=socket.IconUrl, Width=30, Height=30 });
             var button = new Button { Width=40,Height=40,Padding=new Thickness(0),BorderThickness=new Thickness(2),BorderBrush=new SolidColorBrush(Color.FromRgb(159,141,89)),Background=new SolidColorBrush(Color.FromRgb(13,17,18)),Margin=new Thickness(4,6,4,6),Content=contents,Cursor=Cursors.Hand };
@@ -44,7 +45,7 @@ public sealed class SocketStrip : StackPanel
             var group = new StackPanel { Width=104,Margin=new Thickness(3) };
             button.HorizontalAlignment = HorizontalAlignment.Center;
             group.Children.Add(button);
-            if(socket.Name != null) group.Children.Add(new TextBlock { Text=socket.Name,Foreground=Brushes.PaleTurquoise,FontSize=10,TextAlignment=TextAlignment.Center,TextWrapping=TextWrapping.Wrap });
+            group.Children.Add(new TextBlock { Text=socket.Occupied==false ? "Empty socket" : socket.Name ?? "Unresolved socket",Foreground=Brushes.PaleTurquoise,FontSize=10,TextAlignment=TextAlignment.Center,TextWrapping=TextWrapping.Wrap });
             Children.Add(group);
         }
     }

@@ -51,7 +51,7 @@ public partial class EvaluationWindow
         pinnedWindows.Add(window); window.Closed += (_,_)=>pinnedWindows.Remove(window);
         window.Show();
     }
-    private void OpenBookmarks(object sender, RoutedEventArgs e)
+    public void OpenBookmarks(object sender, RoutedEventArgs e)
     {
         if(bookmarkWindow != null) { bookmarkWindow.Activate(); return; }
         try
