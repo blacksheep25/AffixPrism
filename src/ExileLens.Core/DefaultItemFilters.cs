@@ -3,7 +3,9 @@ namespace ExileLens.Core;
 // Category-based starting filters, not a market-value or build-quality ranking.
 public static class DefaultItemFilters
 {
-    public static IReadOnlyList<string> Select(CopiedItem item)
+    // Broad first search, as in EE2's ordinary modifier defaults. Profiles remain explicit opt-in.
+    public static IReadOnlyList<string> Select(CopiedItem item) => Array.Empty<string>();
+    public static IReadOnlyList<string> Suggested(CopiedItem item)
     {
         if (ItemAnalysis.From(item).Unidentified) return Array.Empty<string>();
         if (item.Rarity is not ("Rare" or "Magic") || !Economy.UsesEquipmentListings(item)) return Array.Empty<string>();

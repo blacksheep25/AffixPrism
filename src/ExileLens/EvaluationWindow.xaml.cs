@@ -94,13 +94,18 @@ public partial class EvaluationWindow : Window
         ResultStatus.Text = "Select filters, then check prices";
         DesecratedHeader.Visibility = Visibility.Collapsed;
         if (value == null) { building = false; ResetFilterUndo(); return; }
+        bool quest=ItemPresentation.IsQuest(value);
+        ItemFrame.Height=quest ? 48 : double.NaN;
+        EstimatePanel.Visibility=quest ? Visibility.Collapsed : Visibility.Visible;
+        ((UIElement)ActiveFilters.Parent).Visibility=quest ? Visibility.Collapsed : Visibility.Visible;
+        ItemBase.Visibility=Economy.UsesEquipmentListings(value) || ItemPresentation.IsGem(value) ? Visibility.Visible : Visibility.Collapsed;
         bool exchange = Economy.UsesExchange(value);
         bool equipment = Economy.UsesEquipmentListings(value);
         EquipmentFilters.Visibility = equipment ? Visibility.Visible : Visibility.Collapsed;
         FilterColumn.Width = new GridLength(equipment ? 184 : 0);
         PricePresets.Visibility = SearchPresetBar.Visibility = equipment ? Visibility.Visible : Visibility.Collapsed;
         ListingsPanel.Visibility = equipment ? Visibility.Visible : Visibility.Collapsed;
-        CheckPricesButton.Content = exchange ? "Refresh exchange price" : equipment ? "Search" : "Refresh market price";
+        CheckPricesButton.Content = quest ? "Open quest item wiki" : exchange ? "Refresh exchange price" : equipment ? "Search" : "Refresh market price";
         var analysis = ItemAnalysis.From(value);
 
         Brush rarity = new SolidColorBrush(value.Rarity switch {
@@ -109,11 +114,13 @@ public partial class EvaluationWindow : Window
         });
         bool gem = ItemPresentation.IsGem(value);
         if (gem) rarity = new SolidColorBrush(Color.FromRgb(108,201,195));
+        if(quest) { rarity=new SolidColorBrush(Color.FromRgb(74,230,58)); Caption.Text="Exile Lens · Inspect quest item"; }
         DesecratedHeader.Visibility = analysis.Desecrated ? Visibility.Visible : Visibility.Collapsed;
         ItemTitle.Foreground = rarity; ItemBase.Foreground = rarity; ItemFrame.BorderBrush = rarity;
         ItemTitle.Text = value.Name.ToUpperInvariant(); ItemBase.Text = gem ? (value.ItemClass.Contains("Support",StringComparison.OrdinalIgnoreCase) || value.Details.Contains("Support,") ? "Support" : "Skill Gem") : ItemBase.Text.ToUpperInvariant();
         BodyScroll.ScrollToTop();
         string? previousKind = null;
+        if(quest) ItemRows.Children.Add(new TextBlock { Text="Quest Item",Foreground=new SolidColorBrush(Color.FromRgb(150,150,142)),TextAlignment=TextAlignment.Center,FontFamily=new FontFamily("Georgia"),FontSize=16,Margin=new Thickness(0,8,0,8) });
         int groupId = 0;
         foreach (var line in analysis.Lines)
         {
@@ -314,6 +321,7 @@ public partial class EvaluationWindow : Window
     }
     private void SaveDraft(object sender, RoutedEventArgs e)
     {
+        if(item!=null && ItemPresentation.IsQuest(item)) { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ItemPresentation.WikiUrl(item)) { UseShellExecute=true }); return; }
         foreach (var row in drafts)
             if (row.Filter.Validate() is { } error) { ResultStatus.Text = error; row.Min.Focus(); return; }
         StoreDraft();
@@ -397,11 +405,13 @@ public partial class EvaluationWindow : Window
         building = false;
         SaveDraft(sender,e);
     }
-    private void ResetDefaultFilters(object sender, RoutedEventArgs e)
+    private void SuggestedFilters(object sender,RoutedEventArgs e) => ApplyStartingFilters(true);
+    private void ResetDefaultFilters(object sender, RoutedEventArgs e) => ApplyStartingFilters(false);
+    private void ApplyStartingFilters(bool suggested)
     {
         if(item == null) return;
         building = true;
-        var defaults = DefaultItemFilters.Select(item);
+        var defaults = suggested ? DefaultItemFilters.Suggested(item) : DefaultItemFilters.Select(item);
         foreach(var group in drafts.GroupBy(x => x.Filter.GroupId))
         {
             bool wanted = defaults.Contains(group.First().Filter.Text);

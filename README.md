@@ -11,7 +11,7 @@ A compact, ad-free Windows companion for **Path of Exile 2**. Check an item with
 ## Features
 
 - **In-window price checks:** configurable capture shortcut, official trade-site search, listings, seller comparisons, and supported economy/exchange prices.
-- **Useful filters:** item-type defaults, selectable base type, crafting-base preset, min/max bounds, broad matching, common pseudo stats, reusable profiles and undo.
+- **Useful filters:** broad starting searches, optional suggested stats, selectable base type, crafting-base preset, min/max bounds, broad matching, common pseudo stats, reusable profiles and undo.
 - **Comparable estimates:** currency conversion when fresh rates are available; a recommendation requires sufficiently similar items from at least three independent sellers.
 - **Item cards:** rarity and modifier styling, DPS, flavour text, corruption states, artwork and socket tooltips when the source supplies enough information.
 - **Keep items handy:** bookmarks, notes, recent-check navigation, comparison windows and separate screen pins.

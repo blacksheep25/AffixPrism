@@ -3,6 +3,8 @@ namespace ExileLens.Core;
 // Clipboard and trade data share this display order; missing data is never copied from a peer.
 public static class ItemPresentation
 {
+    public static bool IsQuest(CopiedItem item) => item.Rarity.Equals("Quest",StringComparison.OrdinalIgnoreCase) || item.ItemClass.Contains("Quest",StringComparison.OrdinalIgnoreCase);
+    public static string WikiUrl(CopiedItem item) => "https://www.poe2wiki.net/wiki/"+Uri.EscapeDataString(item.Name.Replace(' ','_'));
     public static bool IsGem(CopiedItem item) => item.Rarity.Equals("Gem",StringComparison.OrdinalIgnoreCase) || item.ItemClass.Contains("Gems",StringComparison.OrdinalIgnoreCase);
     public static string ClassLabel(string text) => text.Trim() switch
     {

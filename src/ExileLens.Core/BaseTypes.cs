@@ -8,7 +8,7 @@ public static class BaseTypes
     {
         using var stream = typeof(BaseTypes).Assembly.GetManifestResourceStream("ExileLens.Core.Data.base-types.txt")!;
         using var reader = new StreamReader(stream);
-        return reader.ReadToEnd().Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        return reader.ReadToEnd().Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Concat(new[] { "Overseer Tablet", "Breach Tablet", "Ritual Tablet", "Expedition Tablet", "Delirium Tablet", "Abyss Tablet", "Precursor Tablet" }).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
     });
     public static bool IsKnown(string name) => Names.Value.Contains(name, StringComparer.OrdinalIgnoreCase);
     public static string? ResolveMagicName(string name)

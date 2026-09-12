@@ -64,6 +64,7 @@ public partial class MainWindow
         ResetQuote();
         if (currentItem == null) return;
         var item = currentItem;
+        if(ItemPresentation.IsQuest(item)) { evaluation.SetQuote("Quest item · inspect or open the wiki"); return; }
         var request = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
         quoteRequest = request;
         evaluation.SetQuote("Checking comparable listings…");

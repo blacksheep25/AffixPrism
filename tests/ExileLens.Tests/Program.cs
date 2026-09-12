@@ -299,11 +299,11 @@ using(var exactQuery = JsonDocument.Parse(LiveTradeClient.BuildQuery(baseRequest
     Check(exactQuery.RootElement.GetProperty("query").GetProperty("type").GetString() == rare.BaseType, "Exact base selection reaches live query");
 using(var broadQuery = JsonDocument.Parse(LiveTradeClient.BuildQuery(baseRequest with { ExactBase = false },null)))
     Check(!broadQuery.RootElement.GetProperty("query").TryGetProperty("type",out _), "Disabling base filter removes exact type restriction");
-var defaultBow = DefaultItemFilters.Select(runeBow);
+var defaultBow = DefaultItemFilters.Suggested(runeBow);
 Check(defaultBow.Count <= 3 && !defaultBow.Contains("18% increased Physical Damage"), "Default filters exclude socket effects and cap the starting selection");
 var defaultRing = ItemParser.Parse("Item Class: Rings\nRarity: Rare\nTest Ring\nGold Ring\n--------\n+100 to maximum Life\n+25% to Fire Resistance")!;
-Check(DefaultItemFilters.Select(defaultRing).Contains("+100 to maximum Life"), "Rare item defaults prioritize life over minor resistance rolls");
-Check(DefaultItemFilters.Select(lineage).Count == 0, "Exchange gems do not receive equipment defaults");
+Check(DefaultItemFilters.Suggested(defaultRing).Contains("+100 to maximum Life"), "Rare item defaults prioritize life over minor resistance rolls");
+Check(DefaultItemFilters.Suggested(lineage).Count == 0, "Exchange gems do not receive equipment defaults");
 using(var autoQuery = JsonDocument.Parse(LiveTradeClient.BuildQuery(baseRequest with { Currency = "Auto" },null)))
     Check(!autoQuery.RootElement.GetProperty("query").GetProperty("filters").GetProperty("trade_filters").GetProperty("filters").TryGetProperty("price",out _), "Auto currency does not restrict listing currency");
 var autoNow=DateTimeOffset.UtcNow;
@@ -323,16 +323,16 @@ Check(dpsLines.Any(l=>l.Text=="Physical DPS: 300") && dpsLines.Any(l=>l.Text=="E
 var resistanceItem=ItemParser.Parse("Item Class: Rings\nRarity: Rare\nResist Test\nGold Ring\n--------\n+10% to all Elemental Resistances\n+20% to Fire Resistance\n+5% to Cold and Lightning Resistances\n+99% to Fire Resistance while Moving")!;
 Check(ItemAnalysis.From(resistanceItem).Lines.Any(l=>l.Kind=="Pseudo" && l.Text=="60% total Elemental Resistance"), "Pseudo resistance sums all/dual rolls and excludes conditional rolls");
 var skillDpsItem=ItemParser.Parse(dpsItem.Details + "\n--------\n+2 to Level of all Attack Skills")!;
-var weaponDefaults=DefaultItemFilters.Select(skillDpsItem);
+var weaponDefaults=DefaultItemFilters.Suggested(skillDpsItem);
 Check(weaponDefaults.Contains("Total DPS: 400") && weaponDefaults.Contains("+2 to Level of all Attack Skills"), "Attack weapon defaults require output as well as skill levels");
 var weakerDpsItem=ItemParser.Parse(skillDpsItem.Details.Replace("100-200","50-100"))!;
 var weaponNow=DateTimeOffset.UtcNow;
 var weaponDoc=new ListingDocument("Standard","fixture",weaponNow,new[] { new ImportedListing("weak","seller",new(1,"Chaos Orb"),weakerDpsItem.Details,weaponNow,true,false) });
 var weaponResult=ComparableMarket.Parse(JsonSerializer.Serialize(weaponDoc),weaponNow).Search(new(skillDpsItem,"Standard","Auto",new[] {new PriceConstraint("Total DPS: 400",360,null,0,"Property"),new PriceConstraint("+2 to Level of all Attack Skills",2,null,0,"Item text",1)},false,false,null),weaponNow);
 Check(weaponResult.Rows.Count==0,"Lower-DPS weapon does not qualify just by sharing skill levels");
-var bootDefaults=DefaultItemFilters.Select(ItemParser.Parse("Item Class: Boots\nRarity: Rare\nTest Boots\nLeather Boots\n--------\n30% increased Movement Speed\n+100 to maximum Life\n+35% to Fire Resistance\n+60 to maximum Mana")!);
+var bootDefaults=DefaultItemFilters.Suggested(ItemParser.Parse("Item Class: Boots\nRarity: Rare\nTest Boots\nLeather Boots\n--------\n30% increased Movement Speed\n+100 to maximum Life\n+35% to Fire Resistance\n+60 to maximum Mana")!);
 Check(bootDefaults.Count==3 && bootDefaults[0]=="30% increased Movement Speed" && bootDefaults.Contains("+100 to maximum Life") && bootDefaults.Any(t=>t.Contains("total Elemental Resistance")), "Boot defaults prioritize movement, life and aggregate resistance");
-var attackDefaults=DefaultItemFilters.Select(skillDpsItem);
+var attackDefaults=DefaultItemFilters.Suggested(skillDpsItem);
 Check(attackDefaults.Count==3 && attackDefaults.Contains("Total DPS: 400") && attackDefaults.Contains("Attacks per Second: 2.00"), "Weapon defaults select DPS, skill level and speed without duplicate damage filters");
 var conversionSnapshot=new EconomySnapshot(new[] {new EconomyRow("Divine Orb","","",100,"Exalted Orb",null,null),new EconomyRow("Chaos Orb","","",2,"Exalted Orb",null,null)},DateTimeOffset.UtcNow,false,false);
 var conversionRates=PriceConversion.Rates(conversionSnapshot,"Divine Orb");

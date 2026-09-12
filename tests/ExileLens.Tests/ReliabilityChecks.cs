@@ -8,6 +8,18 @@ static class ReliabilityChecks
     {
         CopiedItem Read(string name)=>ItemParser.Parse(File.ReadAllText("tests/Fixtures/"+name))!;
         var bow=Read("desecrated-bow.txt");
+        var tablet=ItemParser.Parse("Item Class: Tablets\nRarity: Magic\nBountiful Overseer Tablet of Conquering\n--------\nItem Level: 77\n10 uses remaining\n28% increased Gold found in Map\nMap Bosses grant 52% increased Experience")!;
+        check(tablet.BaseType=="Overseer Tablet" && Economy.UsesEquipmentListings(tablet),"Reported tablet resolves its current base and trade route");
+        using var tabletQuery=JsonDocument.Parse(LiveTradeClient.BuildQuery(new(tablet,"Test","Auto",Array.Empty<PriceConstraint>(),false,false,null),null));
+        check(tabletQuery.RootElement.GetProperty("query").GetProperty("type").GetString()=="Overseer Tablet","Tablet query excludes magic affixes from its base");
+        var omen=ItemParser.Parse("Item Class: Stackable Currency\nRarity: Currency\nOmen of Resurgence\n--------\nStack Size: 1/10")!;
+        const string rootEconomy="""{"core":{"primary":"divine","items":[{"id":"divine","name":"Divine Orb"}]},"items":[{"id":"omen-of-resurgence","name":"Omen of Resurgence"}],"lines":[{"id":"omen-of-resurgence","primaryValue":0.02}]}""";
+        check(Economy.Matching(Economy.Parse(rootEconomy,true),omen).Single().Value==.02m,"Top-level exchange identities resolve Omen of Resurgence");
+        var quest=ItemParser.Parse("Item Class: Quest Items\nRarity: Quest\nOrigin Spark\n--------\nA burgeoning emergent\nflare of empowered life\n--------\nCan be combined with the Origin Cradle within the Tower of Origins")!;
+        check(ItemPresentation.IsQuest(quest) && Economy.Category(quest)==null && !Economy.UsesEquipmentListings(quest),"Quest items are inspectable without a market route");
+        var questLines=ItemAnalysis.From(quest).Lines;
+        check(questLines.Count(l=>l.Kind=="Flavour")==2 && questLines.Last().Kind=="Instructions" && ItemPresentation.WikiUrl(quest)=="https://www.poe2wiki.net/wiki/Origin_Spark","Origin Spark separates lore and instructions with a direct wiki URL");
+        check(DefaultItemFilters.Select(bow).Count==0 && DefaultItemFilters.Suggested(bow).Count>0,"Default searches are broad; suggested stats remain opt-in");
         var lines=ItemAnalysis.From(bow).Lines;
         check(lines.Any(l=>l.IsCrafted && l.Text.Contains("Level of all Attack")) && lines.Any(l=>l.IsDesecrated && l.Text.StartsWith("Companions")),"Reported bow retains crafted and desecrated modifier metadata");
         var sockets=ItemSockets.From(bow);

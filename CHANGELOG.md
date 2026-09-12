@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0-beta.3 — 2026-09-12
+
+- Recognise current tablet base names, including Overseer Tablet, when stripping magic affixes.
+- Resolve exchange item names from the provider top-level items list; fixes Omen of Resurgence and other omitted currencies.
+- Start ordinary item searches without numeric modifier filters, following the reviewed Exiled Exchange 2 workflow. Suggested filters remain an explicit preset; saved profiles and per-item edits remain available.
+- Quest items use an inspection-only card with green title, orange lore, grey instructions and a direct wiki button. No market request is sent.
+- Hide empty base-title rows on currency and quest cards.
+- Reviewed seven new dashboard/comparison reference screenshots; reconstruction inventory is in docs/REFERENCE_SCREEN_REVIEW.md.
+- Validation: 241 core checks plus Windows UI smoke. Live network requests remain blocked on the development host; currency schema was checked against a previously received provider response.
+
+
 ## 0.4.0-beta.2 — 2026-09-09
 
 - Fixed Spirit and other identical-text modifiers being rejected when the trade catalogue contains multiple IDs. Searches require at least one matching ID, with the selected min/max bounds and all other filters preserved.

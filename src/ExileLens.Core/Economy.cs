@@ -14,9 +14,10 @@ public sealed record EconomyCategory(string Type, bool Exchange);
 public static class Economy
 {
     public static bool UsesExchange(CopiedItem item) => Category(item)?.Exchange == true;
-    public static bool UsesEquipmentListings(CopiedItem item) => !UsesExchange(item) && !ItemPresentation.IsGem(item) && item.Rarity is "Normal" or "Magic" or "Rare" or "Unique";
+    public static bool UsesEquipmentListings(CopiedItem item) => !ItemPresentation.IsQuest(item) && !UsesExchange(item) && !ItemPresentation.IsGem(item) && item.Rarity is "Normal" or "Magic" or "Rare" or "Unique";
     public static EconomyCategory? Category(CopiedItem item)
     {
+        if (ItemPresentation.IsQuest(item)) return null;
         string c = item.ItemClass.ToLowerInvariant();
         if (c.Contains("uncut") || item.Name.StartsWith("Uncut ", StringComparison.OrdinalIgnoreCase)) return new("UncutGems", true);
         if (ItemPresentation.IsGem(item) && System.Text.RegularExpressions.Regex.IsMatch(item.Details, @"(?im)^(?:Support,\s*)?Lineage(?:,|$)")) return new("LineageSupportGems",true);
@@ -83,6 +84,8 @@ public static class Economy
         string? currency = PrimaryCurrency(json) ?? fallbackCurrency;
         if (string.IsNullOrWhiteSpace(currency)) throw new JsonException("Price currency was not supplied by the provider");
         var names = root.TryGetProperty("core", out var core) ? Metadata(core) : new Dictionary<string, string>();
+        // Exchange item identities live at the root; core.items only describes pricing currencies.
+        foreach(var entry in Metadata(root)) names[entry.Key]=entry.Value;
         var rows = new List<EconomyRow>();
         foreach (var line in lines.EnumerateArray())
         {

@@ -52,6 +52,7 @@ public sealed class ItemPreviewCard : Border
         var rarity = Item.Rarity switch { "Rare" => Color(233,221,135), "Unique" => Color(209,131,61), "Magic" => Color(145,151,235), _ => Color(205,200,183) };
         bool gem = ItemPresentation.IsGem(Item);
         if (gem) rarity = Color(108,201,195);
+        if(ItemPresentation.IsQuest(Item)) rarity=Color(74,230,58);
         BorderBrush = rarity;
         var stack = new StackPanel();
         TextBlock Text(string text, Brush brush, double size = 13) => new() { Text = text, Foreground = brush, FontFamily = new FontFamily("Georgia"), FontSize = size, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(2,3,2,3) };

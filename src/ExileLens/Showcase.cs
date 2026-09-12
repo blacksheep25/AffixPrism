@@ -23,6 +23,12 @@ public partial class MainWindow
         view.SetComparableResult(market.Search(new ComparableRequest(item,"Demo","Divine Orb",Array.Empty<PriceConstraint>(),true,true,null),time));
         view.VerifyListingComparison(window => Capture("artifacts/showcase/comparison.png",window));
         Capture("artifacts/showcase/price-check.png",view);
+        view.SetItem(ItemParser.Parse("Item Class: Quest Items\nRarity: Quest\nOrigin Spark\n--------\nA burgeoning emergent\nflare of empowered life\n--------\nCan be combined with the Origin Cradle within the Tower of Origins"),"Demo");
+        view.Height=440; view.UpdateLayout();
+        Capture("artifacts/showcase/quest-item.png",view);
+        if(view.CheckPricesButton.Content?.ToString()!="Open quest item wiki" || view.EstimatePanel.Visibility!=System.Windows.Visibility.Collapsed || view.EquipmentFilters.Visibility!=System.Windows.Visibility.Collapsed) throw new Exception("Quest view retained pricing controls");
+        view.SetItem(item,"Demo");
+        if(view.EstimatePanel.Visibility!=System.Windows.Visibility.Visible || view.EquipmentFilters.Visibility!=System.Windows.Visibility.Visible) throw new Exception("Equipment controls did not return after quest inspection");
         view.Close();
     }
 }

@@ -42,6 +42,7 @@ public sealed record ItemAnalysis(int? ItemLevel, int? Quality, bool Corrupted, 
         var content = new List<ItemLine>();
         string? metadata = null;
         bool inMetadata = false;
+        bool quest = ItemPresentation.IsQuest(item); bool questInstructions=false;
         bool gem = ItemPresentation.IsGem(item);
         string? gemSection = null; bool gemEffectSeen = false;
         int headerEnd = Array.IndexOf(lines, "--------");
@@ -74,6 +75,11 @@ public sealed record ItemAnalysis(int? ItemLevel, int? Quality, bool Corrupted, 
                 else if (gemSection == null && gemEffectSeen && !Regex.IsMatch(raw, @"\d")) gemSection = "Flavour";
                 if (gemSection != null) kind = gemSection;
                 else if (kind == "Item text" && Regex.IsMatch(raw, @"\d")) gemEffectSeen = true;
+            }
+            if(quest && kind is not ("Property" or "State"))
+            {
+                if(raw is "Quest Item" or "Quest Items") kind="Class";
+                else { if(raw.StartsWith("Can be ",StringComparison.OrdinalIgnoreCase) || raw.StartsWith("Right click",StringComparison.OrdinalIgnoreCase) || raw.StartsWith("Take this",StringComparison.OrdinalIgnoreCase)) questInstructions=true; kind=questInstructions ? "Instructions" : "Flavour"; }
             }
             var unknownMarkers = Regex.Matches(raw, @"\(metadata:([^)]*)\)");
             var markers = Regex.Matches(raw, @"\((crafted|desecrated|fractured|mutated|vestigial|bonded|scourge|crucible|utility|cosmetic)\)", RegexOptions.IgnoreCase);
