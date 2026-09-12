@@ -188,8 +188,8 @@ public partial class EvaluationWindow : Window
 
                 foreach (var member in group)
                 {
-                    member.Min.GotKeyboardFocus += (_, _) => { if (!group[0].Filter.Enabled) Toggle(); };
-                    member.Max.GotKeyboardFocus += (_, _) => { if (!group[0].Filter.Enabled) Toggle(); };
+                    member.Min.TextChanged += (_, _) => { if (!building && member.Min.IsKeyboardFocused && !group[0].Filter.Enabled) Toggle(); };
+                    member.Max.TextChanged += (_, _) => { if (!building && member.Max.IsKeyboardFocused && !group[0].Filter.Enabled) Toggle(); };
                 }
             }
             ItemRows.Children.Add(row);
@@ -266,6 +266,7 @@ public partial class EvaluationWindow : Window
 
     public void SetQuote(string status, System.Collections.Generic.IReadOnlyList<EconomyRow>? rows = null)
     {
+        Estimate.ToolTip = null;
         currentQueryUrl=null; OpenQueryButton.Visibility=Visibility.Collapsed;
         averageListing = null; AverageCompare.Visibility = Visibility.Collapsed; ExchangePanel.Visibility = Visibility.Collapsed;
         Estimate.Text = rows is { Count: > 0 } ? rows[0].PriceLabel : "—";
@@ -275,7 +276,7 @@ public partial class EvaluationWindow : Window
         ResultCount.Text = "0 / 0";
         Variants.ItemsSource = null;
     }
-    public void SetExchange(EconomySnapshot snapshot)
+    public void SetExchange(EconomySnapshot snapshot, EconomySnapshot? rates = null)
     {
         if (item == null) return;
         var matches = Economy.Matching(snapshot.Rows,item).Where(r => r.Value > 0).ToArray();
@@ -284,7 +285,10 @@ public partial class EvaluationWindow : Window
         ExchangePanel.Visibility = Visibility.Visible;
         var quantity = System.Text.RegularExpressions.Regex.Match(item.Details, @"Stack Size: ([\d,]+)");
         decimal stack = quantity.Success && decimal.TryParse(quantity.Groups[1].Value.Replace(",",""),out var n) ? n : 1;
-        ExchangeInfo.Text = string.Join("\n\n", matches.Select(r => $"1 {r.Name} ≈ {r.Value:0.####} {r.Currency}\n1 {r.Currency} ≈ {1/r.Value:0.####} {r.Name}\nYour stack ({stack:0}): ≈ {stack*r.Value:0.##} {r.Currency}"))
+        var displayRates = snapshot.Stale ? null : rates;
+        Estimate.Text = MarketPriceDisplay.Format(matches[0], displayRates, DateTimeOffset.UtcNow) + " each";
+        Estimate.ToolTip = string.Join("\n", matches.Select(r=>$"Source price: {r.PriceLabel} each · {MarketPriceDisplay.Amount(1/r.Value)} items per {r.Currency}"));
+        ExchangeInfo.Text = string.Join("\n\n", matches.Select(r => $"Each: ≈ {MarketPriceDisplay.Format(r, displayRates, DateTimeOffset.UtcNow)}\nYour stack ({stack:0}): ≈ {MarketPriceDisplay.FormatQuantity(r, stack, displayRates, DateTimeOffset.UtcNow)}"))
             + $"\n\n{snapshot.Source} · {snapshot.FetchedAt.ToLocalTime():dd MMM HH:mm}" + (snapshot.Stale ? " · STALE" : "")
             + "\nIndicative ratios, not executable buy/sell orders. Confirm quantities and gold cost in the in-game exchange.";
         QueueContentResize();
@@ -365,6 +369,7 @@ public partial class EvaluationWindow : Window
     }
     public void SetComparableResult(ComparableResult result)
     {
+        Estimate.ToolTip = null;
         SocketStrip.Observe(result.Rows.SelectMany(r=>r.Item.Sockets ?? Array.Empty<ItemSocket>()));
         currentQueryUrl=result.SearchUrl; OpenQueryButton.Visibility=currentQueryUrl==null ? Visibility.Collapsed : Visibility.Visible;
         ItemHeaderArt.Url = result.Rows.Select(x => x.IconUrl).FirstOrDefault(x => x != null);
@@ -570,8 +575,9 @@ public partial class EvaluationWindow : Window
         BodyScroll.ScrollToEnd(); UpdateLayout();
         if (Math.Abs(BodyScroll.VerticalOffset - BodyScroll.ScrollableHeight) > 1) throw new Exception("Cannot reach the bottom of the results");
         var field = drafts[0].Min;
+        bool previouslyEnabled = drafts[0].Filter.Enabled;
         field.RaiseEvent(new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, Environment.TickCount, null, field) { RoutedEvent = Keyboard.GotKeyboardFocusEvent });
-        if (field.SelectedText != field.Text || !drafts[0].Filter.Enabled) throw new Exception("Keyboard focus does not select the value and enable its filter");
+        if (field.SelectedText != field.Text || drafts[0].Filter.Enabled != previouslyEnabled) throw new Exception("Keyboard focus must select the value without changing filter activation");
         FitToBounds(new Rect(0, 0, 640, 480), true);
         if (Left < 0 || Top < 0 || Left + Width > 640 || Top + Height > 480) throw new Exception("Evaluator exceeds a small work area");
         MaxHeight = MaxWidth = double.PositiveInfinity; MinHeight = 400; Width = 480; Height = 550;

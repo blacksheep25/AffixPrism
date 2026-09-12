@@ -51,9 +51,15 @@ public sealed class ListingComparisonWindow : Window
             foreach(var stat in keyChanges) summary.Children.Add(new TextBlock { Text=stat.Yours+"  →  "+stat.Seller, TextWrapping=TextWrapping.Wrap, Margin=new Thickness(0,4,0,0), Foreground=Foreground });
             content.Children.Add(summary);
         }
+        content.Children.Add(new TextBlock { Text=SimilarItems.Explain(yours,listing.Item), TextWrapping=TextWrapping.Wrap, Foreground=Foreground, Margin=new Thickness(8,4,8,8) });
         var cards = new Grid(); cards.ColumnDefinitions.Add(new ColumnDefinition()); cards.ColumnDefinitions.Add(new ColumnDefinition());
-        cards.Children.Add(new ItemPreviewCard { Item = yours, IconUrl = yourIcon, Margin = new Thickness(5) });
-        var other = new ItemPreviewCard { Item = listing.Item, IconUrl = listing.IconUrl, Margin = new Thickness(5) }; Grid.SetColumn(other, 1); cards.Children.Add(other); content.Children.Add(cards);
+        cards.RowDefinitions.Add(new RowDefinition { Height=GridLength.Auto });
+        cards.RowDefinitions.Add(new RowDefinition());
+        var yoursLabel=new TextBlock { Text="YOUR ITEM", FontSize=14, FontWeight=FontWeights.SemiBold, Foreground=Brushes.PaleTurquoise, Margin=new Thickness(12,6,12,8) };
+        var sellerLabel=new TextBlock { Text=listing.Listing.Id=="average" ? "SIMILAR-ITEM AVERAGE" : listing.Listing.Id=="pinned" ? "COMPARISON ITEM" : "SELLER’S ITEM", FontSize=14, FontWeight=FontWeights.SemiBold, Foreground=new SolidColorBrush(Color.FromRgb(220,199,140)), Margin=new Thickness(12,6,12,8) };
+        cards.Children.Add(yoursLabel); Grid.SetColumn(sellerLabel,1); cards.Children.Add(sellerLabel);
+        var own=new ItemPreviewCard { Item = yours, ComparedWith = listing.Item, IconUrl = yourIcon, Margin = new Thickness(5) }; Grid.SetRow(own,1); cards.Children.Add(own);
+        var other = new ItemPreviewCard { Item = listing.Item, ComparedWith = yours, IconUrl = listing.IconUrl, Margin = new Thickness(5) }; Grid.SetColumn(other, 1); Grid.SetRow(other,1); cards.Children.Add(other); content.Children.Add(cards);
         var numbers = new StackPanel();
         content.Children.Add(new Expander { Header = "Numerical changes · seller minus yours", Foreground = new SolidColorBrush(Color.FromRgb(191,165,109)), IsExpanded = false, Content = numbers, Margin = new Thickness(5,10,5,0) });
         var differences = new CheckBox { Content = "Differences only", Foreground = new SolidColorBrush(Color.FromRgb(220,199,140)), Margin = new Thickness(8,12,8,8) }; numbers.Children.Add(differences);

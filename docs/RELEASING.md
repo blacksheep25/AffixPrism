@@ -1,5 +1,7 @@
 # Release process
 
+For local builds, reuse `artifacts/build` and replace its contents. Do not create a new output folder for each fix. Stop the executable running from that folder before replacing it; keep settings in LocalAppData intact.
+
 GitHub release notes must contain only the approved, user-facing changes for that version. Never paste the entire cumulative CHANGELOG.md or automatically generated commit history into a release. Keep previous versions in CHANGELOG.md for reference. Use the approved version-specific notes file as the release body.
 
 1. Update `Directory.Build.props`, `CHANGELOG.md`, and the packaging script's default version.

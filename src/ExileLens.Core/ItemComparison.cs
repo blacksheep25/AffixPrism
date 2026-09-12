@@ -6,8 +6,9 @@ public static class ItemComparison
 {
     public static IReadOnlyList<ComparisonRow> Rows(CopiedItem baseline, CopiedItem current)
     {
-        var before = ItemAnalysis.From(baseline).Lines.Where(x => x.Kind != "Pseudo" && (Regex.IsMatch(x.Text, @"\d") || x.Kind == "State")).ToList();
-        var after = ItemAnalysis.From(current).Lines.Where(x => x.Kind != "Pseudo" && (Regex.IsMatch(x.Text, @"\d") || x.Kind == "State")).ToList();
+        bool Comparable(ItemLine x) => x.Kind is not ("Pseudo" or "Description" or "Instructions" or "Flavour" or "Gem description" or "Gem tags" or "Class") && (Regex.IsMatch(x.Text, @"\d") || x.Kind == "State");
+        var before = ItemAnalysis.From(baseline).Lines.Where(Comparable).ToList();
+        var after = ItemAnalysis.From(current).Lines.Where(Comparable).ToList();
         var rows = new List<ComparisonRow>();
         foreach (var old in before)
         {

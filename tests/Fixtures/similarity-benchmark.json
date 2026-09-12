@@ -36,10 +36,10 @@
     "eligible": false
   },
   {
-    "name": "Different base",
+    "name": "Same weapon class and performance, different base",
     "replace": "Obliterator Bow",
     "withText": "Crude Bow",
-    "eligible": false
+    "eligible": true
   },
   {
     "name": "Rune arrow is not explicit",

@@ -1,11 +1,11 @@
-param([string]$Version = '0.4.0-beta.4')
+param([string]$Version = '0.4.0-beta.5')
 $ErrorActionPreference = 'Stop'
 if ($Version -notmatch '^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$') { throw 'Invalid version' }
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Push-Location $projectRoot
 try {
-    $output = Join-Path $projectRoot "artifacts/release-$Version/win-x64"
-    if (Test-Path -LiteralPath $output) { throw "Output already exists: $output. Use a fresh output directory." }
+    $output = Join-Path $projectRoot 'artifacts/build'
+    if (Get-Process ExileLens -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq (Join-Path $output 'ExileLens.exe') }) { throw 'Exit the running build before packaging.' }
     dotnet publish src/ExileLens -c Release -r win-x64 --self-contained true -p:Version=$Version -o $output --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Publish failed' }
     Copy-Item LICENSE,THIRD_PARTY.md,CHANGELOG.md -Destination $output

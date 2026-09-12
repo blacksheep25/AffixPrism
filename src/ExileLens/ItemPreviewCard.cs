@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -39,6 +40,8 @@ public sealed class RemoteItemIcon : Image
 
 public sealed class ItemPreviewCard : Border
 {
+    public static readonly DependencyProperty ComparedWithProperty = DependencyProperty.Register(nameof(ComparedWith), typeof(CopiedItem), typeof(ItemPreviewCard), new PropertyMetadata(null, Refresh));
+    public CopiedItem? ComparedWith { get => (CopiedItem?)GetValue(ComparedWithProperty); set => SetValue(ComparedWithProperty,value); }
     public static readonly DependencyProperty ItemProperty = DependencyProperty.Register(nameof(Item), typeof(CopiedItem), typeof(ItemPreviewCard), new PropertyMetadata(null, Refresh));
     public static readonly DependencyProperty IconUrlProperty = DependencyProperty.Register(nameof(IconUrl), typeof(string), typeof(ItemPreviewCard), new PropertyMetadata(null, Refresh));
     public CopiedItem? Item { get => (CopiedItem?)GetValue(ItemProperty); set => SetValue(ItemProperty, value); }
@@ -79,6 +82,19 @@ public sealed class ItemPreviewCard : Border
             if (line.Kind is "Flavour" or "Gem description" or "Instructions") label.FontStyle = FontStyles.Italic;
             label.ToolTip = ItemMetadata.Style(line).Name + "\n" + line.Tooltip;
             stack.Children.Add(label);
+            if (ComparedWith != null)
+            {
+                var difference = ItemComparison.Rows(Item,ComparedWith).FirstOrDefault(r=>r.Yours==line.Text && r.Kind==line.Kind);
+                if (difference != null)
+                {
+                    label.Background = difference.Changed ? Color(42,35,24) : Color(23,30,27);
+                    label.ToolTip += "\n" + (difference.Changed ? "Other item: " + difference.Seller : "Same on both");
+                    if (!difference.Changed) { previous=line.Kind; continue; }
+                    var caption = difference.Seller=="—" ? "Only on this item" : "Other minus this: " + difference.Change;
+                    var detail=Text(caption,Color(179,169,143),10); detail.FontFamily=new FontFamily("Segoe UI");
+                    stack.Children.Add(detail);
+                }
+            }
             previous = line.Kind;
         }
         Child = stack;

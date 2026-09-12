@@ -39,4 +39,4 @@ Completion remains blocked on these dependencies; the current application must n
 
 ## User scope update
 
-Pricing and trade-data implementation are explicitly deferred. They no longer block local UI work. The evaluator now has editable local filters, selection highlighting, exact/broad presets, per-item draft restoration, persistent view preferences, comparison/loot actions, reference-shaped empty trade results and themed controls. Data requests are paused rather than repeatedly attempted. The remaining reference-wide parity inventory is still not fully verified; do not claim all uninspected screens are identical.
+Historical UI-stage status: pricing was deferred during the initial recreation. Live trade and economy requests are now implemented with cancellation, caching and request pacing. The evaluator supports editable filters, exact/broad presets, draft restoration and listing comparisons. Reference-wide parity and real-game/hardware validation remain unverified; this document does not establish full parity.

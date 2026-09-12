@@ -10,7 +10,7 @@ public static class ItemPresentation
     {
         "Body Armours" => "Body Armour", "Unknown class" => "", _ => text.Trim()
     };
-    public static bool IsClassLabel(string text) => new[] { "Body Armour", "Body Armours", "Gloves", "Boots", "Helmet", "Helmets", "Ring", "Rings", "Amulet", "Amulets", "Belt", "Belts", "Shield", "Shields", "Quiver", "Quivers", "Focus", "Foci", "Quarterstaff", "Quarterstaves", "Wand", "Wands", "Bow", "Bows", "Sceptre", "Sceptres" }.Contains(text);
+    public static bool IsClassLabel(string text) => new[] { "Jewel", "Jewels", "Body Armour", "Body Armours", "Gloves", "Boots", "Helmet", "Helmets", "Ring", "Rings", "Amulet", "Amulets", "Belt", "Belts", "Shield", "Shields", "Quiver", "Quivers", "Focus", "Foci", "Quarterstaff", "Quarterstaves", "Wand", "Wands", "Bow", "Bows", "Sceptre", "Sceptres" }.Contains(text);
     public static IReadOnlyList<ItemLine> Lines(CopiedItem item)
     {
         var lines = ItemAnalysis.From(item).Lines.ToList();

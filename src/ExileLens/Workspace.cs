@@ -112,7 +112,17 @@ public partial class MainWindow
             Quotes.ItemsSource = matches.ToArray();
             QuoteStatus.Text = matches.Count == 0 ? "No matching market estimate for this item in the selected league." : $"{snapshot.Source} · {settings.League} · fetched {snapshot.FetchedAt.ToLocalTime():dd MMM HH:mm}{(snapshot.Stale ? " · STALE" : "")} · category estimates";
             evaluation.SetQuote(QuoteStatus.Text, matches);
-            if (Economy.Category(item)?.Exchange == true) evaluation.SetExchange(snapshot);
+            if (Economy.Category(item)?.Exchange == true)
+            {
+                EconomySnapshot? displayRates = null;
+                if (!snapshot.Stale)
+                {
+                    try { displayRates = await economy.CategoryAsync(new("Currency",true), settings.League, request.Token, TimeSpan.FromMinutes(5)); }
+                    catch (Exception ex) when (ex is HttpRequestException or IOException or System.Text.Json.JsonException) { /* Keep the original price if exchange rates cannot be loaded. */ }
+                }
+                if (request.IsCancellationRequested || quoteRequest != request) return;
+                evaluation.SetExchange(snapshot, displayRates);
+            }
         }
         catch (OperationCanceledException) { if (!request.IsCancellationRequested && quoteRequest == request) evaluation.SetQuote("Trade request timed out. Try Check prices again."); }
         catch (Exception ex) when (ex is HttpRequestException or ArgumentException or NotSupportedException or System.Text.Json.JsonException or IOException or UnauthorizedAccessException or KeyNotFoundException or InvalidOperationException)

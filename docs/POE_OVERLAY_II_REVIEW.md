@@ -70,7 +70,9 @@ The evaluation, guide and inspection panels are declared separately. The evaluat
 | Prices | Search, fetch and display listings within evaluation UI | Generated browser search; no in-overlay listings |
 | League choices | Its trade-data service | Public economy feed with cached/bundled fallback |
 
-## Useful next work
+## Historical recommendations
+
+These were recommendations from the initial review, not the current implementation backlog. Input routing, asynchronous pricing, cancellation, caching and request pacing now exist. Parsing coverage and real-game verification remain ongoing; see FEATURE_AUDIT.md and RELEASING.md for current limitations.
 
 1. Build an Exile Lens input-routing scope that handles its own focused windows explicitly, restores state on every exit path, and does not send inputs to unrelated applications.
 2. Keep the existing freshness check and diagnostics; there is no need to clear the user's clipboard merely to imitate the other application.

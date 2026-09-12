@@ -7,29 +7,34 @@ public static class SimilarItems
 {
     private static readonly Regex Numbers = new(@"(?<![\d.])[+-]?\d+(?:\.\d+)?");
     private static decimal[] Values(string text) => Numbers.Matches(text).Select(m => decimal.Parse(m.Value, CultureInfo.InvariantCulture)).ToArray();
-    private static ItemLine[] Mods(CopiedItem item) => ItemAnalysis.From(item).Lines.Where(l => l.Kind is not ("Pseudo" or "Property" or "State" or "Flavour" or "Description") && Numbers.IsMatch(l.Text)).ToArray();
+    private static ItemLine[] Mods(CopiedItem item) => ItemAnalysis.From(item).Lines.Where(l => (l.Kind is "Item text" or "Explicit" or "Implicit" or "Rune" or "Enchant" || DefaultItemFilters.Suggested(item).Contains(l.Text)) && Numbers.IsMatch(l.Text)).ToArray();
+    private static decimal Weight(CopiedItem item, ItemLine line) => DefaultItemFilters.Suggested(item).Contains(line.Text) ? 4m : 1m;
+    public static string? Exclusion(CopiedItem yours, CopiedItem other)
+    {
+        var a=ItemAnalysis.From(yours); var b=ItemAnalysis.From(other);
+        if (yours.Rarity != other.Rarity || a.CorruptionLevel != b.CorruptionLevel || a.Unidentified != b.Unidentified) return "Different rarity, corruption or identification state";
+        if (yours.Rarity == "Unique" && !a.Unidentified && yours.Name != other.Name) return "Different unique item";
+        if (yours.BaseType != other.BaseType && !(yours.Rarity is "Rare" or "Magic" && yours.ItemClass == other.ItemClass && a.Lines.Any(l=>l.Text.StartsWith("Total DPS:")))) return "Different base item";
+        foreach (var critical in a.Lines.Where(l=>l.Text.Contains("to Level of",StringComparison.OrdinalIgnoreCase) || l.Text.Contains("additional Arrow",StringComparison.OrdinalIgnoreCase)))
+            if (!b.Lines.Any(l=>l.Kind==critical.Kind && ComparableMarket.Signature(l.Text)==ComparableMarket.Signature(critical.Text) && Values(l.Text).SequenceEqual(Values(critical.Text)))) return "Different skill levels or additional arrows";
+        var dps=a.Lines.FirstOrDefault(l=>l.Text.StartsWith("Total DPS:"));
+        if(dps!=null) { var theirs=b.Lines.FirstOrDefault(l=>l.Text.StartsWith("Total DPS:")); if(theirs==null || Values(theirs.Text)[0]<Values(dps.Text)[0]*.85m || Values(theirs.Text)[0]>Values(dps.Text)[0]*1.2m) return "Weapon DPS outside 85–120% of yours"; }
+        return null;
+    }
+    public static string Explain(CopiedItem yours, CopiedItem other) => Exclusion(yours,other) ?? $"{Score(yours,other):P0} weighted stat similarity · {(Score(yours,other)>=.8m ? "qualifies for valuation" : "below 80% valuation threshold")} · key stats count four times";
     public static decimal Score(CopiedItem yours, CopiedItem other)
     {
-        var a = ItemAnalysis.From(yours); var b = ItemAnalysis.From(other);
-        if (yours.BaseType != other.BaseType || yours.Rarity != other.Rarity || a.CorruptionLevel != b.CorruptionLevel || a.Unidentified != b.Unidentified || yours.Rarity == "Unique" && !a.Unidentified && yours.Name != other.Name) return 0;
-        foreach (var critical in a.Lines.Where(l => l.Text.Contains("to Level of",StringComparison.OrdinalIgnoreCase) || l.Text.Contains("additional Arrow",StringComparison.OrdinalIgnoreCase)))
-            if (!b.Lines.Any(l=>l.Kind==critical.Kind && ComparableMarket.Signature(l.Text)==ComparableMarket.Signature(critical.Text) && Values(l.Text).SequenceEqual(Values(critical.Text)))) return 0;
-        var myDps=a.Lines.FirstOrDefault(l=>l.Text.StartsWith("Total DPS:"));
-        if(myDps != null)
-        {
-            var theirDps=b.Lines.FirstOrDefault(l=>l.Text.StartsWith("Total DPS:"));
-            if(theirDps==null || Values(theirDps.Text)[0] < Values(myDps.Text)[0]*.85m || Values(theirDps.Text)[0] > Values(myDps.Text)[0]*1.2m) return 0;
-        }
+        if (Exclusion(yours,other)!=null) return 0;
         var mine = Mods(yours); var theirs = Mods(other).ToList();
         if (mine.Length == 0) return 0;
-        decimal sum = 0; int total = Math.Max(mine.Length, theirs.Count);
+        decimal sum = 0; decimal total = Math.Max(mine.Sum(l=>Weight(yours,l)), theirs.Sum(l=>Weight(other,l)));
         foreach (var mod in mine)
         {
             var match = theirs.FirstOrDefault(l => l.Kind == mod.Kind && ComparableMarket.Signature(l.Text) == ComparableMarket.Signature(mod.Text));
             if (match == null) continue;
             theirs.Remove(match);
             var x = Values(mod.Text); var y = Values(match.Text);
-            sum += x.Zip(y, (v,w) => Math.Sign(v) != Math.Sign(w) ? 0m : 1 - Math.Min(1, Math.Abs(v-w)/Math.Max(1,Math.Max(Math.Abs(v),Math.Abs(w))))).Average();
+            sum += Math.Min(Weight(yours,mod),Weight(other,match))*x.Zip(y, (v,w) => Math.Sign(v) != Math.Sign(w) ? 0m : 1 - Math.Min(1, Math.Abs(v-w)/Math.Max(1,Math.Max(Math.Abs(v),Math.Abs(w))))).Average();
         }
         return total == 0 ? 0 : sum / total;
     }
@@ -45,7 +50,7 @@ public static class SimilarItems
         if (ItemAnalysis.From(item).Unidentified) return new(null,result.SellerCount,0,null,"Unidentified base-item listings only. Hidden identity and modifiers cannot be valued reliably.");
         var peers = result.Rows.Select(r => (Row:r, Score:Score(item,r.Item), Price:ConvertedPrice(r,result))).Where(r=>r.Price.HasValue).Where(r => r.Score >= .8m)
             .GroupBy(r => r.Row.Account.Trim(), StringComparer.OrdinalIgnoreCase).Select(g => g.OrderByDescending(r => r.Score).ThenBy(r => r.Price).First()).OrderByDescending(p=>p.Score).Take(10).ToArray();
-        if (peers.Length < 3) return new(null,peers.Length,0,null,$"No recommendation: {peers.Length} qualifying independent sellers; at least 3 with 80% modifier/roll similarity are required. " + PriceDiagnostics.From(item,result).Summary);
+        if (peers.Length < 3) return new(null,peers.Length,0,null,$"No recommendation: {peers.Length} qualifying independent sellers; at least 3 with 80% weighted stat similarity are required. " + PriceDiagnostics.From(item,result).Summary);
         var prices = peers.Select(r => r.Price!.Value).Order().ToArray();
         decimal price = (prices[(prices.Length-1)/2]+prices[prices.Length/2])/2;
         var lines = ItemAnalysis.From(item).Lines.Select(line =>

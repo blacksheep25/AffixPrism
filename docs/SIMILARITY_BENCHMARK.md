@@ -10,7 +10,7 @@ Eight labelled synthetic cases passed on 9 September 2026:
 | Lower attack-skill level | Exclude | Pass |
 | Much lower physical damage | Exclude | Pass |
 | Different corruption state | Exclude | Pass |
-| Different base type | Exclude | Pass |
+| Different weapon base, same class and performance | Include | Pass |
 | Explicit arrow instead of rune arrow | Exclude | Pass |
 
 Additional checks verify duplicate sellers do not increase independent-seller coverage and mixed-currency medians agree only when valid conversion rates exist. Missing rates suppress insufficient-seller recommendations.

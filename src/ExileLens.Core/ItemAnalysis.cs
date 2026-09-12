@@ -44,12 +44,15 @@ public sealed record ItemAnalysis(int? ItemLevel, int? Quality, bool Corrupted, 
         bool inMetadata = false;
         bool quest = ItemPresentation.IsQuest(item); bool questInstructions=false;
         bool gem = ItemPresentation.IsGem(item);
+        bool essence = item.Rarity == "Currency" && item.Name.Contains("Essence", StringComparison.OrdinalIgnoreCase);
+        bool jewelInstructions = false;
+        bool usageInstructions = false;
         string? gemSection = null; bool gemEffectSeen = false;
         int headerEnd = Array.IndexOf(lines, "--------");
         foreach (string source in lines.Skip(Math.Max(0, headerEnd + 1)))
         {
             string raw = CleanTradeText(source);
-            if (raw == "--------") { gemSection = null; metadata = null; inMetadata = false; continue; }
+            if (raw == "--------") { gemSection = null; jewelInstructions = false; usageInstructions = false; metadata = null; inMetadata = false; continue; }
             if (raw.Length == 0) continue;
             if (raw.StartsWith('{') || inMetadata)
             {
@@ -65,6 +68,13 @@ public sealed record ItemAnalysis(int? ItemLevel, int? Quality, bool Corrupted, 
             if (item.Rarity == "Currency" && kind == "Item text") kind = "Description";
             if (metadata == "{ Flavour Text }") kind = "Flavour";
             if (metadata == "{ Description }") kind = "Description";
+            if (raw.StartsWith("Can only be equipped if ", StringComparison.OrdinalIgnoreCase)) kind = "Description";
+            if (raw.StartsWith("Place into an allocated Jewel Socket", StringComparison.OrdinalIgnoreCase)) jewelInstructions = true;
+            if (jewelInstructions) kind = "Description";
+            if (essence && metadata == null && kind != "State" && !raw.StartsWith("Stack Size:", StringComparison.Ordinal))
+                kind = raw.StartsWith("Right click", StringComparison.OrdinalIgnoreCase) ? "Instructions" : "Explicit";
+            if (metadata == null && (raw.StartsWith("Right click this item", StringComparison.OrdinalIgnoreCase) || raw.StartsWith("Can be used in a personal Map Device", StringComparison.OrdinalIgnoreCase) || raw.StartsWith("Place into an allocated", StringComparison.OrdinalIgnoreCase))) usageInstructions = true;
+            if (usageInstructions && !jewelInstructions) kind = "Instructions";
             if (ItemPresentation.IsClassLabel(raw)) kind = "Class";
             if (gem && metadata == null)
             {
