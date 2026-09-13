@@ -3,6 +3,7 @@ using System.Text.Json;
 
 int checks = 0;
 void Check(bool condition, string name) { if (!condition) throw new Exception(name); Console.WriteLine("PASS " + name); checks++; }
+UpdateChecks.Run(Check);
 string Line(string id = "ExpeditionLogBook_Atoll") => $"2025/12/31 21:36:10 473486140 2caa22d9 [DEBUG Client 31436] Generating level 80 area \"{id}\" with seed 2676229948";
 Check(AreaParser.Parse(Line()) is { IsLogbook: true, Level: 80, DisplayName: "Atoll Logbook" }, "Observed Logbook entry");
 Check(AreaParser.Parse(Line("ExpeditionLeagueBoss")) is { IsExpedition: true, IsLogbook: false }, "Expedition boss");
@@ -424,6 +425,12 @@ Check(SocketAugments.Match("Wands","-1 to Level of all Spell Skills")==null,"Soc
 var wandSocketItem=ItemParser.Parse("Item Class: Wands\nRarity: Unique\nAdonia's Ego\nSiphoning Wand\n--------\nSockets: S\n--------\n+1 to Level of all Spell Skills (rune)")!;
 var wandSocket=new SocketArtworkCatalog().Resolve(ItemSockets.From(wandSocketItem).Single());
 Check(wandSocket.Name=="Hedgewitch Assandra's Rune of Wisdom" && wandSocket.IconUrl!=null && wandSocket.Inferred,"Copied wand resolves rune identity and artwork while preserving inference label");
+var ventor=ItemParser.Parse("Item Class: Rings\nRarity: Unique\nVentor's Gamble\nGold Ring\n--------\n12% increased Rarity of Items found (implicit)\n+37 to maximum Life\n+20 to Spirit\n9% increased Rarity of Items found\n-11% to Cold Resistance")!;
+var ventorOther=ItemParser.Parse(ventor.Details.Replace("+37","+79").Replace("+20","+19").Replace("9% increased","10% increased").Replace("-11%","+35%"))!;
+var generalRing=ComparisonOverview.Create(ventor,ventorOther,"General");
+Check(generalRing.Stats.Count==5 && generalRing.Stats.Any(s=>s.Name.Contains("Spirit") && s.Direction<0),"General ring overview includes spirit and all numeric modifiers");
+Check(generalRing.Stats.Count(s=>s.Name.Contains("Rarity"))==2,"General comparison keeps implicit and explicit rarity separate");
+Check(generalRing.Stats.Any(s=>s.Yours==-11 && s.Other==35 && s.Direction>0) && generalRing.Verdict.StartsWith("Trade-off"),"General comparison preserves negative resistances and mixed outcomes");
 var runeCatalog = new[] { new EconomyRow("Greater Iron Rune","","",5,"Exalted Orb",null,null),new EconomyRow("Perfect Iron Rune","","",50,"Exalted Orb",null,null),new EconomyRow("Iron Rune","","",1,"Exalted Orb",null,null), new EconomyRow("Countess Seske's Rune of Archery","","",80,"Exalted Orb",null,null) };
 Check(RuneNames.Match("GREATER IRON RUNE",90,runeCatalog)?.Row.Value == 5, "Rune OCR exact names preserve tier");
 Check(RuneNames.Match("2x Greater Iron Rune",90,runeCatalog)?.PriceLabel.Contains("10 Exalted") == true, "Rune choices include stack total");

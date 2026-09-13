@@ -13,7 +13,7 @@ public sealed record OverviewStat(string Name, decimal? Yours, decimal? Other, b
 }
 public sealed record ComparisonOverview(string Verdict, IReadOnlyList<OverviewStat> Stats, string Gains, string Losses)
 {
-    public static readonly string[] Priorities = { "Physical attacks", "Elemental attacks", "Spells", "Defences" };
+    public static readonly string[] Priorities = { "General", "Physical attacks", "Elemental attacks", "Spells", "Defences" };
     public static ComparisonOverview Create(CopiedItem yours, CopiedItem other, string priority)
     {
         var a=ItemAnalysis.From(yours); var b=ItemAnalysis.From(other);
@@ -32,20 +32,34 @@ public sealed record ComparisonOverview(string Verdict, IReadOnlyList<OverviewSt
         }
         if(priority=="Defences") { Add("Armour"); Add("Evasion Rating"); Add("Energy Shield"); }
         bool Relevant(ItemLine l) => l.Kind is "Explicit" or "Item text" or "Implicit" or "Rune" or "Enchant";
+        if(priority=="General")
+        {
+            Add("Total DPS"); Add("Attacks per Second"); Add("Critical Hit Chance",true);
+            Add("Armour"); Add("Evasion Rating"); Add("Energy Shield");
+            foreach(var row in ItemComparison.Rows(yours,other).Where(r=>Relevant(new ItemLine("",r.Kind))))
+            {
+                decimal[] Values(string text)=>Regex.Matches(text,@"[+-]?\d+(?:\.\d+)?").Select(m=>decimal.Parse(m.Value,CultureInfo.InvariantCulture)).ToArray();
+                var x=Values(row.Yours); var y=Values(row.Seller); var text=row.Yours=="—" ? row.Seller : row.Yours;
+                var label=Regex.Replace(text,@"[+-]?\d+(?:\.\d+)?%?\s*","").Trim();
+                if(row.Kind is "Implicit" or "Rune" or "Enchant")label+=" ("+row.Kind.ToLowerInvariant()+")";
+                for(int i=0;i<Math.Max(x.Length,y.Length);i++)stats.Add(new(label+(Math.Max(x.Length,y.Length)>1 ? $" · value {i+1}" : ""),i<x.Length?x[i]:null,i<y.Length?y[i]:null,true));
+            }
+        }
         bool Wanted(string text) => text.Contains("to Level of",StringComparison.OrdinalIgnoreCase) ||
             (priority=="Spells" && (text.Contains("increased Spell Damage",StringComparison.OrdinalIgnoreCase) || text.Contains("increased Cast Speed",StringComparison.OrdinalIgnoreCase))) ||
             (priority=="Defences" && (text.Contains("to maximum Life",StringComparison.OrdinalIgnoreCase) || text.Contains("Resistance",StringComparison.OrdinalIgnoreCase)));
-        foreach(var line in a.Lines.Concat(b.Lines).Where(l=>Relevant(l)&&Wanted(l.Text)).DistinctBy(l=>ComparableMarket.Signature(l.Text)))
+        foreach(var line in a.Lines.Concat(b.Lines).Where(l=>priority!="General"&&Relevant(l)&&Wanted(l.Text)).DistinctBy(l=>ComparableMarket.Signature(l.Text)))
         {
             decimal? Value(ItemAnalysis item) { var match=item.Lines.FirstOrDefault(l=>Relevant(l)&&ComparableMarket.Signature(l.Text)==ComparableMarket.Signature(line.Text)); if(match==null) return null; var number=Regex.Match(match.Text,@"[+-]?\d+(?:\.\d+)?"); return number.Success ? decimal.Parse(number.Value,CultureInfo.InvariantCulture) : null; }
             stats.Add(new(Regex.Replace(line.Text,@"[+-]?\d+(?:\.\d+)?%?\s*","",RegexOptions.None).Trim(),Value(a),Value(b),true));
         }
         string verdict;
         if(a.Unidentified || b.Unidentified || yours.ItemClass!=other.ItemClass) verdict="Insufficient comparable information";
-        else if(stats.Count==0 || stats.Any(s=>!s.Yours.HasValue || !s.Other.HasValue)) verdict="Trade-off · some relevant stats are unavailable";
+        else if(stats.Count==0) verdict="No numeric stats to compare · see the item cards";
+        else if(stats.Any(s=>!s.Yours.HasValue || !s.Other.HasValue)) verdict="Trade-off · some relevant stats are unavailable";
         else if(stats.All(s=>s.Direction==0)) verdict="Very similar on the displayed stats";
         else if(stats.Any(s=>s.Direction>0) && stats.Any(s=>s.Direction<0)) verdict="Trade-off · review the gains and losses";
-        else verdict=(stats.Any(s=>s.Direction>0) ? "Other item" : "Your item")+" is stronger on the displayed "+priority.ToLowerInvariant()+" stats";
+        else verdict=(stats.Any(s=>s.Direction>0) ? "Other item" : "Your item")+(priority=="General" ? " has higher displayed values · assess their effects for your build" : " is stronger on the displayed "+priority.ToLowerInvariant()+" stats");
         return new(verdict,stats,string.Join(", ",stats.Where(s=>s.Direction>0).Select(s=>s.Name+" "+s.Difference)),string.Join(", ",stats.Where(s=>s.Direction<0).Select(s=>s.Name+" "+s.Difference)));
     }
 }

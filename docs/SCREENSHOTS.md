@@ -10,7 +10,7 @@ Full weapon properties, typed modifiers, DPS, optional suggested filters, a sepa
 
 ## Seller comparison
 
-Your item beside a synthetic seller item, with an At a glance priority selector, key-stat table, gains/losses and inline card differences.
+Your item beside a synthetic seller item, with inline card differences. At a glance starts collapsed; expand it for a General stat comparison or a focused priority.
 
 ![Item comparison](screenshots/comparison.png)
 

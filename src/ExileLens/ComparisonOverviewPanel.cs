@@ -13,9 +13,10 @@ public sealed class ComparisonOverviewPanel : Border
     public ComparisonOverviewPanel(CopiedItem yours,CopiedItem other,string otherLabel)
     {
         Background=new SolidColorBrush(Color.FromRgb(24,24,19)); Padding=new Thickness(12); Margin=new Thickness(5,0,5,12);
-        var root=new StackPanel(); Child=root;
-        var priority=new ComboBox { ItemsSource=ComparisonOverview.Priorities, SelectedIndex=ItemAnalysis.From(yours).Lines.Any(l=>l.Text.StartsWith("Total DPS:")) ? 0 : yours.ItemClass is "Wands" or "Staves" or "Sceptres" ? 2 : 3, Width=180, HorizontalAlignment=HorizontalAlignment.Left, Margin=new Thickness(0,5,0,10) };
-        root.Children.Add(new TextBlock { Text="AT A GLANCE · comparison priority", Foreground=Brushes.Khaki }); root.Children.Add(priority);
+        var root=new StackPanel();
+        Child=new Expander { Header="AT A GLANCE", IsExpanded=false, Foreground=Brushes.Khaki, Content=root };
+        var priority=new ComboBox { ItemsSource=ComparisonOverview.Priorities, SelectedIndex=0, Width=180, HorizontalAlignment=HorizontalAlignment.Left, Margin=new Thickness(0,5,0,10) };
+        root.Children.Add(priority);
         var body=new StackPanel(); root.Children.Add(body);
         void Render()
         {
@@ -38,7 +39,7 @@ public sealed class ComparisonOverviewPanel : Border
                 row++;
             }
             body.Children.Add(table);
-            foreach(var text in new[]{"Gains: "+(result.Gains.Length>0 ? result.Gains : "No measured gains"),"Losses: "+(result.Losses.Length>0 ? result.Losses : "No measured losses"),"Differences are other minus yours. Missing stats are unknown. Actual build damage depends on your skills and scaling."})
+            foreach(var text in new[]{"Higher on other item: "+(result.Gains.Length>0 ? result.Gains : "None"),"Lower on other item: "+(result.Losses.Length>0 ? result.Losses : "None"),"Green/red means higher/lower, not necessarily better/worse. Missing stats are unknown. Choose a priority to narrow the comparison."})
                 body.Children.Add(new TextBlock { Text=text,Foreground=Brushes.DarkKhaki,TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,5,0,0),FontSize=11 });
         }
         priority.SelectionChanged+=(_,_)=>Render(); Render();

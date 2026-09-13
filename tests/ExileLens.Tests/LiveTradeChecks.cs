@@ -119,7 +119,7 @@ static class LiveTradeChecks
         check(handler.Paths.Count == 3 && handler.Paths[1].Contains("/search/poe2/Test%20League") && handler.Paths[2].Contains("/fetch/a,b,c?query=test"), "Live adapter executes stat lookup then search then listing fetch");
         check(live.Rows.Count == 3 && live.Median == 20 && handler.SearchBody!.Contains("explicit.life"), "Full live adapter pipeline returns filtered prices without imported data");
         check(elapsed.Elapsed < TimeSpan.FromSeconds(3), "Independent endpoint requests do not add artificial search-to-fetch delays");
-        check(stages.Contains("Loading trade filters…") && stages.Contains("Loading listing prices…"), "Search progress identifies the current request stage");
+        check(stages.Contains("Loading trade filters…") && stages.Any(s=>s.StartsWith("Loading listing page 1 of")), "Search progress identifies the current request stage");
         using var objects = new TradeHandler(catalog.GetRawText(), fetched) { SearchResponse = """{"id":"test","result":[{"id":"a"},"b",{"id":"c"}],"total":3}""" };
         var objectResult = await new LiveTradeClient(new HttpClient(objects)).SearchAsync(request, CancellationToken.None);
         check(objectResult.Median == 20 && objects.Paths[2].Contains("/fetch/a,b,c?query=test"), "Object and string search result IDs both fetch and price correctly");

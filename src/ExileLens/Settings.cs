@@ -14,6 +14,9 @@ public sealed class WatchEntry
 }
 public sealed class Settings
 {
+    public bool CheckUpdates { get; set; } = true;
+    public bool DownloadUpdates { get; set; }
+    public bool BetaUpdates { get; set; } = true;
     public string LogPath { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam", "steamapps", "common", "Path of Exile 2", "logs", "Client.txt");
     public string League { get; set; } = "";
     public string Currency { get; set; } = "Exalted Orb";

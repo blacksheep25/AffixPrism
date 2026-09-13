@@ -6,6 +6,7 @@
     <AssemblyName>ExileLens</AssemblyName><ApplicationIcon>Assets/ExileLens.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup><ProjectReference Include="../ExileLens.Core/ExileLens.Core.csproj" /></ItemGroup>
+  <ItemGroup><Content Include="UpdateHelper.ps1" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" /></ItemGroup>
 <ItemGroup><Resource Include="Assets/ExileLens.ico" /></ItemGroup>
 <ItemGroup><Resource Include="Assets/ExileLens.png" /></ItemGroup>
 <ItemGroup><Resource Include="Assets/empty-socket.png" /></ItemGroup>

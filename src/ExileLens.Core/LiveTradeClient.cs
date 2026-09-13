@@ -19,6 +19,9 @@ public sealed class LiveTradeClient(HttpClient http)
         await gate.WaitAsync(token);
         try
         {
+            string cacheKey = request.League + "\n" + JsonSerializer.Serialize(request);
+            if (cache.TryGetValue(cacheKey, out var saved) && DateTimeOffset.UtcNow - saved.At < TimeSpan.FromMinutes(2))
+                return saved.Result with { Source = saved.Result.Source + " · cached (under 2 minutes)" };
             if(DateTimeOffset.UtcNow>=catalogExpires) { statCatalog=null; filterCatalog=null; catalogExpires=DateTimeOffset.UtcNow.AddMinutes(30); }
             if (request.Filters.Any(x => x.Kind != "Property") && statCatalog == null)
                 statCatalog = await SendAsync(HttpMethod.Get, "/api/trade2/data/stats", null, "stats", "Loading trade filters…", token, progress);
@@ -29,9 +32,6 @@ public sealed class LiveTradeClient(HttpClient http)
                 category = ResolveCategory(filterCatalog.Value, request.Item.ItemClass);
             }
             string body = BuildQuery(request, statCatalog, category);
-            string cacheKey = request.League + "\n" + JsonSerializer.Serialize(request);
-            if (cache.TryGetValue(cacheKey, out var saved) && DateTimeOffset.UtcNow - saved.At < TimeSpan.FromMinutes(2))
-                return saved.Result with { Source = saved.Result.Source + " · cached (under 2 minutes)" };
             var search = await SendAsync(HttpMethod.Post, "/api/trade2/search/poe2/" + Uri.EscapeDataString(request.League), body, "search", "Searching POE trade…", token, progress);
             string queryId = ReadText(search.GetProperty("id"), "search.id");
             int? total = search.TryGetProperty("total", out var count) && count.ValueKind==JsonValueKind.Number && count.TryGetInt32(out var found) ? found : null;
@@ -49,6 +49,7 @@ public sealed class LiveTradeClient(HttpClient http)
             var ids = page.Select((x, i) => ReadText(x.ValueKind == JsonValueKind.Object && x.TryGetProperty("id", out var id) ? id : x, $"search.result[{i}].id")).Distinct().ToArray();
             if (ids.Length == 0) return Complete(Empty(request), 0);
             var combined = new System.Text.Json.Nodes.JsonArray();
+            int pageNumber=0;
             foreach (var batch in ids.Chunk(10))
             {
                 if (combined.Count > 0)
@@ -58,7 +59,8 @@ public sealed class LiveTradeClient(HttpClient http)
                     if (partial.Rows.Count >= 10 || nextRequests.GetValueOrDefault("fetch") - DateTimeOffset.UtcNow > TimeSpan.FromSeconds(10))
                         return Complete(partial with { Source=partial.Source + " · additional pages not fetched" },combined.Count);
                 }
-                var fetched = await SendAsync(HttpMethod.Get, "/api/trade2/fetch/" + string.Join(",", batch.Select(Uri.EscapeDataString)) + "?query=" + Uri.EscapeDataString(queryId), null, "fetch", "Loading listing prices…", token, progress);
+                pageNumber++;
+                var fetched = await SendAsync(HttpMethod.Get, "/api/trade2/fetch/" + string.Join(",", batch.Select(Uri.EscapeDataString)) + "?query=" + Uri.EscapeDataString(queryId), null, "fetch", $"Loading listing page {pageNumber} of {(ids.Length+9)/10}", token, progress);
                 foreach(var row in fetched.GetProperty("result").EnumerateArray()) combined.Add(System.Text.Json.Nodes.JsonNode.Parse(row.GetRawText()));
             }
             progress?.Invoke("Checking listing filters…");
@@ -74,8 +76,12 @@ public sealed class LiveTradeClient(HttpClient http)
         if (delay > TimeSpan.FromSeconds(10)) throw new HttpRequestException($"Trade is cooling down. Retry in {Math.Ceiling(delay.TotalSeconds)} seconds.");
         if (delay > TimeSpan.Zero)
         {
-            progress?.Invoke($"Request spacing · waiting {Math.Ceiling(delay.TotalSeconds)} seconds…");
-            await Task.Delay(delay, token);
+            var until=nextRequests.GetValueOrDefault(policy);
+            while((delay=until-DateTimeOffset.UtcNow)>TimeSpan.Zero)
+            {
+                progress?.Invoke($"{stage} · ready in {Math.Ceiling(delay.TotalSeconds)}s (trade request spacing)");
+                await Task.Delay(delay<TimeSpan.FromSeconds(1) ? delay : TimeSpan.FromSeconds(1), token);
+            }
         }
         // Independent endpoint budgets: a search must not delay its first listing fetch.
         nextRequests[policy] = DateTimeOffset.UtcNow.AddSeconds(4);

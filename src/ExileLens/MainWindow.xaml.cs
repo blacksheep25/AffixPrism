@@ -88,6 +88,7 @@ public partial class MainWindow : Window
         expedition.Left = Math.Clamp(Left + Width + 12, SystemParameters.VirtualScreenLeft, Math.Max(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth - expedition.Width));
         expedition.Top = Top;
         PopulateSettings();
+        InitializeUpdates();
         RefreshWatchlist();
         if (loadError != null) Notice.Text = loadError;
         RestoreSession();
