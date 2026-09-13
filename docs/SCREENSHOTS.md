@@ -4,13 +4,13 @@ These are renders of actual ExileLens Windows controls from the included smoke/s
 
 ## Item evaluation
 
-Full weapon properties, typed modifiers, DPS, three default filters, a separate min/max panel, bookmarks/pinning and an indicative similar-item estimate.
+Full weapon properties, typed modifiers, DPS, optional suggested filters, a separate min/max panel, bookmarks/pinning and an indicative similar-item estimate.
 
 ![Weapon evaluation](screenshots/price-check.png)
 
 ## Seller comparison
 
-The captured item beside a synthetic seller item. Both cards use the same presentation and modifier grouping.
+Your item beside a synthetic seller item, with an At a glance priority selector, key-stat table, gains/losses and inline card differences.
 
 ![Item comparison](screenshots/comparison.png)
 

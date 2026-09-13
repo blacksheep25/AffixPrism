@@ -38,7 +38,7 @@ public static class ItemMetadata
     public static string Type(ItemLine line)
     {
         if (line.Kind == "State") return line.Text switch { "Fractured Item" => "Fractured", "Desecrated" => "Desecrated", "Unmodifiable except Chaos" => "Unmodifiable", _ => Styles.Any(s => s.Name == line.Text) ? line.Text : "Unknown" };
-        string metadata = line.Metadata ?? "";
+        string metadata = (line.Metadata ?? "").Replace(" · Unscalable Value", "");
         foreach (string type in new[] { "Fractured", "Crafted", "Desecrated", "Mutated", "Vestigial", "Bonded", "Scourge", "Crucible", "Utility", "Cosmetic" })
             if (metadata.Contains(type, StringComparison.OrdinalIgnoreCase)) return type;
         if (line.Text.StartsWith("Bonded:",StringComparison.Ordinal)) return "Bonded";

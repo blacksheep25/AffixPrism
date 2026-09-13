@@ -10,15 +10,17 @@ public sealed class EvaluationFilter
     public string Kind { get; }
     public decimal? CopiedValue { get; }
     public bool Enabled { get; set; }
+    public bool Unscalable { get; }
     public bool WholeNumber => Regex.IsMatch(Text, @"(?i)to level of .*skills|^(?:Item Level|Rune Sockets|Sockets):|^Requires:|to (?:Strength|Dexterity|Intelligence|all Attributes|Accuracy Rating)|to maximum (?:Life|Mana)$");
     public string Minimum { get; set; } = "";
     public string Maximum { get; set; } = "";
     // Broad matching is for variable performance rolls, not eligibility or discrete mechanics.
-    public bool AllowsBroad => CopiedValue > 0 && !Regex.IsMatch(Text,
+    public bool AllowsBroad => !Unscalable && CopiedValue > 0 && !Regex.IsMatch(Text,
         @"(?i)^(?:Requires:|Item Level:|Level:|Quality:|Sockets:|Rune Sockets:|Stack Size:)|to level of .*skills|(?:additional|maximum) (?:arrows?|projectiles?|charges?|sockets?)|(?:arrows?|projectiles?) (?:additional|fired)|uses remaining");
     public EvaluationFilter(ItemLine line, int valueIndex = 0, int groupId = 0)
     {
         Text = line.Text; Kind = line.Kind; ValueIndex = valueIndex; GroupId = groupId;
+        Unscalable = line.Metadata?.Contains("Unscalable Value", StringComparison.OrdinalIgnoreCase) == true;
         var matches = Regex.Matches(line.Text, @"(?<![\d.])[+-]?\d+(?:\.\d+)?");
         var match = valueIndex >= 0 && valueIndex < matches.Count ? matches[valueIndex] : Match.Empty;
         CopiedValue = match.Success && decimal.TryParse(match.Value, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal n) ? n : null;

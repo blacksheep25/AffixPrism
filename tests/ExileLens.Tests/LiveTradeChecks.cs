@@ -61,6 +61,17 @@ static class LiveTradeChecks
         string fetched = "{\"result\":[" + string.Join(",", new[] { Fixture("a", "A", 100, 10), Fixture("b", "B", 110, 20), Fixture("c", "C", 120, 30), Fixture("d", "D", 150, 2), Fixture("e", "E", 100, 1, "exalted") }) + "]}";
         var result = LiveTradeClient.ParseListings(JsonDocument.Parse(fetched).RootElement, request, DateTimeOffset.UtcNow);
         check(result.Rows.Count == 3 && result.Median == 20, "Live response excludes wrong bounds and currency before estimating");
+        var skillResponse=System.Text.Json.Nodes.JsonNode.Parse(fetched)!;
+        foreach(var row in skillResponse["result"]!.AsArray())
+        {
+            row!["item"]!["grantedSkills"]=System.Text.Json.Nodes.JsonNode.Parse("""[{"name":"Grants Skill","values":[["Level 18 Power Siphon",25]],"displayMode":0},{"name":"Grants Skill","values":[["[PinnacleOfPower|Pinnacle of Power]",25]],"displayMode":0}]""");
+            row["item"]!["properties"]=System.Text.Json.Nodes.JsonNode.Parse("""[{"name":"Grants Skill","values":[["Level 18 Power Siphon",25]],"displayMode":0}]""");
+        }
+        using(var skillJson=JsonDocument.Parse(skillResponse.ToJsonString()))
+        {
+            var skills=ItemAnalysis.From(LiveTradeClient.ParseListings(skillJson.RootElement,request,DateTimeOffset.UtcNow).Rows.First().Item).Lines;
+            check(skills.Count(l=>l.Text=="Grants Skill: Level 18 Power Siphon")==1 && skills.Any(l=>l.Text=="Grants Skill: Pinnacle of Power" && l.Kind=="Property"),"Trade granted skills preserve all names, clean links and avoid property duplicates");
+        }
         var broadRequest = request with { ExactBase=false, Item=request.Item with { ItemClass="Rings" } };
         var broadResult = LiveTradeClient.ParseListings(JsonDocument.Parse(fetched).RootElement,broadRequest,DateTimeOffset.UtcNow);
         check(broadResult.Rows.Count==3 && broadResult.Rows.All(r=>r.Item.ItemClass=="Rings"), "Broad-category listings preserve class instead of all being discarded");

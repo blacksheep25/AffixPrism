@@ -255,12 +255,15 @@ public sealed class LiveTradeClient(HttpClient http)
             if (name.Length > 0) text.AppendLine(name);
             text.AppendLine(baseType).AppendLine("--------");
             if (item.TryGetProperty("ilvl", out var ilvl)) text.AppendLine("Item Level: " + ilvl.GetInt32());
-            if (item.TryGetProperty("properties", out var properties))
+            var propertyLines = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string propertyField in new[] { "properties", "grantedSkills" })
+            if (item.TryGetProperty(propertyField, out var properties) && properties.ValueKind == JsonValueKind.Array)
                 foreach (var property in properties.EnumerateArray())
                 {
                     string label = ReadText(property.GetProperty("name"), "item.properties.name");
                     string values = string.Join(", ", property.GetProperty("values").EnumerateArray().Select(x => ReadText(x[0], $"item.properties[{label}].values")));
-                    text.AppendLine(label + (values.Length > 0 ? ": " + values : ""));
+                    string propertyText = ItemAnalysis.CleanTradeText(label + (values.Length > 0 ? ": " + values : ""));
+                    if (propertyLines.Add(propertyText)) text.AppendLine(propertyText);
                 }
             if (item.TryGetProperty("requirements", out var requirements) && requirements.ValueKind == JsonValueKind.Array)
             {

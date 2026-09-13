@@ -42,15 +42,7 @@ public sealed class ListingComparisonWindow : Window
         var close = new Button { Content = "Close", Padding = new Thickness(10,4,10,4) }; close.Click += (_, _) => Close();
         Grid.SetColumn(close, 1); title.Children.Add(close); grid.Children.Add(title);
         var content = new StackPanel { Margin = new Thickness(0,0,10,0) };
-        var keyStats = DefaultItemFilters.Suggested(yours);
-        var keyChanges = ItemComparison.Rows(yours,listing.Item).Where(r=>keyStats.Contains(r.Yours)).ToArray();
-        if(keyChanges.Length>0)
-        {
-            var summary = new StackPanel { Margin=new Thickness(8,4,8,12) };
-            summary.Children.Add(new TextBlock { Text="Key comparison · yours → seller", FontWeight=FontWeights.SemiBold, Foreground=Foreground });
-            foreach(var stat in keyChanges) summary.Children.Add(new TextBlock { Text=stat.Yours+"  →  "+stat.Seller, TextWrapping=TextWrapping.Wrap, Margin=new Thickness(0,4,0,0), Foreground=Foreground });
-            content.Children.Add(summary);
-        }
+        content.Children.Add(new ComparisonOverviewPanel(yours, listing.Item, listing.Listing.Id=="average" ? "Similar-item average" : listing.Listing.Id=="pinned" ? "Comparison item" : "Seller item"));
         content.Children.Add(new TextBlock { Text=SimilarItems.Explain(yours,listing.Item), TextWrapping=TextWrapping.Wrap, Foreground=Foreground, Margin=new Thickness(8,4,8,8) });
         var cards = new Grid(); cards.ColumnDefinitions.Add(new ColumnDefinition()); cards.ColumnDefinitions.Add(new ColumnDefinition());
         cards.RowDefinitions.Add(new RowDefinition { Height=GridLength.Auto });

@@ -144,17 +144,19 @@ public partial class EvaluationWindow : Window
             if (gem && line.Kind is "Flavour" or "Gem description" or "Instructions") { Grid.SetColumnSpan(label, 1); label.FontSize = 15; }
             Grid.SetColumn(label, 1); row.Children.Add(label);
             int numberCount = System.Text.RegularExpressions.Regex.Matches(line.Text, @"(?<![\d.])[+-]?\d+(?:\.\d+)?").Count;
-            if (equipment && numberCount > 0 && line.Kind is not ("Flavour" or "Gem description" or "Instructions" or "Description" or "Gem tags"))
+            bool presence = numberCount == 0 && line.Kind is "Item text" or "Explicit" or "Implicit" or "Rune" or "Enchant";
+            if (equipment && (numberCount > 0 || presence) && !line.Text.StartsWith("Note:",StringComparison.OrdinalIgnoreCase) && line.Kind is not ("Flavour" or "Gem description" or "Instructions" or "Description" or "Gem tags" or "Class"))
             {
                 var group = new List<(EvaluationFilter Filter, TextBox Min, TextBox Max)>();
                 var fieldStack = new StackPanel { Margin = new Thickness(0), VerticalAlignment = VerticalAlignment.Center };
                 var extraFields = new StackPanel();
-                for (int index = 0; index < numberCount; index++)
+                for (int index = 0; index < Math.Max(1,numberCount); index++)
                 {
                     var filter = new EvaluationFilter(line, index, currentGroup); filter.Preset(BroadPreset.IsChecked == true);
                     TextBox minimum = new() { Text = filter.Minimum }, maximum = new();
                     var fields = RangeFields(minimum, maximum); fields.Margin = new Thickness(0, index > 0 ? 2 : 0, 0, 0);
-                    string valueName = ValueName(line.Text, index, numberCount);
+                    if (presence) { fields.Visibility=Visibility.Collapsed; fieldStack.Children.Add(new TextBlock { Text="Match this modifier · no numeric bounds", Foreground=Foreground, FontSize=11, TextWrapping=TextWrapping.Wrap }); }
+                    string valueName = presence ? "modifier presence" : ValueName(line.Text, index, numberCount);
                     minimum.ToolTip = $"Minimum {valueName}" + (filter.AllowsBroad ? "" : "\nKept exact in Broad mode; edit manually to change."); maximum.ToolTip = $"Maximum {valueName}";
                     if (index == 0) fieldStack.Children.Add(fields);
                     else

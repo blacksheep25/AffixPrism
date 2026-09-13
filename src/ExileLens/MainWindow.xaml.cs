@@ -632,6 +632,24 @@ public partial class MainWindow : Window
     {
         var window = target ?? this;
         window.UpdateLayout();
+        // Remote artwork is asynchronous. Let WPF complete image downloads before
+        // rendering a showcase rather than capturing the first placeholder frame.
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        bool Pending(DependencyObject node)
+        {
+            if (node is System.Windows.Controls.Image { Source: BitmapImage { IsDownloading: true } }) return true;
+            for (int i=0;i<VisualTreeHelper.GetChildrenCount(node);i++)
+                if(Pending(VisualTreeHelper.GetChild(node,i))) return true;
+            return false;
+        }
+        while(Pending(window) && DateTime.UtcNow<deadline)
+        {
+            var frame=new System.Windows.Threading.DispatcherFrame();
+            var timer=new System.Windows.Threading.DispatcherTimer { Interval=TimeSpan.FromMilliseconds(50) };
+            timer.Tick+=(_,_)=> { timer.Stop(); frame.Continue=false; };
+            timer.Start(); System.Windows.Threading.Dispatcher.PushFrame(frame);
+        }
+        window.UpdateLayout();
         var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
         bitmap.Render(window);
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));

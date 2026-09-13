@@ -91,7 +91,7 @@ public sealed class ComparableMarket
                 {
                     var line = row.Analysis.Lines[index];
                     if (Signature(line.Text) != group.Key.Item1 || group.Key.Kind != null && line.Kind != group.Key.Kind) continue;
-                    if (!group.All(filter => NumericValue(line.Text, filter.ValueIndex) is { } value && (!filter.Minimum.HasValue || value >= filter.Minimum) && (!filter.Maximum.HasValue || value <= filter.Maximum))) continue;
+                    if (!group.All(filter => (!filter.Minimum.HasValue && !filter.Maximum.HasValue) || NumericValue(line.Text, filter.ValueIndex) is { } value && (!filter.Minimum.HasValue || value >= filter.Minimum) && (!filter.Maximum.HasValue || value <= filter.Maximum))) continue;
                     if (!visited.Add(index)) continue;
                     if (!owners.TryGetValue(index, out int owner) || Assign(owner, visited)) { owners[index] = groupIndex; return true; }
                 }

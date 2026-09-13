@@ -59,7 +59,8 @@ public partial class MainWindow
                 new ListingPrice(18+i, "Divine Orb"), item.Details.Replace("Maelström Song", "Demonstration Staff").Replace("123(120-139)%", "125(120-139)%"), time, true, true)).ToArray());
         var market = ComparableMarket.Parse(JsonSerializer.Serialize(data), time);
         view.SetComparableResult(market.Search(new ComparableRequest(item,"Demo","Divine Orb",Array.Empty<PriceConstraint>(),true,true,null),time));
-        view.VerifyListingComparison(window => Capture("artifacts/showcase/comparison.png",window));
+        view.VerifyListingComparison(window => { window.Height=System.Math.Min(1040,System.Windows.SystemParameters.WorkArea.Height-24); window.UpdateLayout(); Capture("artifacts/showcase/comparison.png",window); });
+        view.ShowAllBounds.IsChecked=true;
         view.ResizeToItemContent(); view.UpdateLayout();
         Capture("artifacts/showcase/price-check.png",view);
         view.SetItem(ItemParser.Parse("Item Class: Quest Items\nRarity: Quest\nOrigin Spark\n--------\nA burgeoning emergent\nflare of empowered life\n--------\nCan be combined with the Origin Cradle within the Tower of Origins"),"Demo");

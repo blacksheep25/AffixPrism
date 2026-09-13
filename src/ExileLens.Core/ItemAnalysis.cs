@@ -29,6 +29,7 @@ public sealed record ItemAnalysis(int? ItemLevel, int? Quality, bool Corrupted, 
     });
     private const string NumberPattern = @"[+-]?\d+(?:\.\d+)?";
     private static readonly Regex Range = new($@"(?<value>{NumberPattern})\((?<min>{NumberPattern})-(?<max>{NumberPattern})\)", RegexOptions.CultureInvariant);
+    private static readonly Regex FixedRoll = new($@"(?<value>{NumberPattern})\((?<reference>{NumberPattern})\)", RegexOptions.CultureInvariant);
     private static readonly Regex TierPattern = new(@"\(Tier:\s*(\d+)\)", RegexOptions.CultureInvariant);
     public static ItemAnalysis From(CopiedItem item)
     {
@@ -94,6 +95,11 @@ public sealed record ItemAnalysis(int? ItemLevel, int? Quality, bool Corrupted, 
             var unknownMarkers = Regex.Matches(raw, @"\(metadata:([^)]*)\)");
             var markers = Regex.Matches(raw, @"\((crafted|desecrated|fractured|mutated|vestigial|bonded|scourge|crucible|utility|cosmetic)\)", RegexOptions.IgnoreCase);
             string? lineMetadata = metadata?.Trim('{', ' ', '}');
+            if (Regex.IsMatch(raw, @"\s+[—–-]\s+Unscalable Value$", RegexOptions.IgnoreCase))
+            {
+                raw = Regex.Replace(raw, @"\s+[—–-]\s+Unscalable Value$", "", RegexOptions.IgnoreCase);
+                lineMetadata = (lineMetadata ?? "") + " · Unscalable Value";
+            }
             if (markers.Count > 0) lineMetadata = string.Join(" · ", new[] { lineMetadata }.Concat(markers.Select(m => m.Groups[1].Value + " Modifier")).Where(v => !string.IsNullOrWhiteSpace(v)));
             if (unknownMarkers.Count > 0) lineMetadata = (lineMetadata ?? "") + " · Unknown metadata: " + string.Join(", ",unknownMarkers.Select(m => m.Groups[1].Value));
             var rolls = new List<ItemRoll>();
@@ -102,6 +108,13 @@ public sealed record ItemAnalysis(int? ItemLevel, int? Quality, bool Corrupted, 
                 if (decimal.TryParse(match.Groups["value"].Value, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal value) &&
                     decimal.TryParse(match.Groups["min"].Value, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal min) &&
                     decimal.TryParse(match.Groups["max"].Value, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal max)) rolls.Add(new(value, min, max));
+                return match.Groups["value"].Value;
+            });
+            display = FixedRoll.Replace(display, match =>
+            {
+                if (decimal.TryParse(match.Groups["value"].Value, NumberStyles.Number, CultureInfo.InvariantCulture, out var value) &&
+                    decimal.TryParse(match.Groups["reference"].Value, NumberStyles.Number, CultureInfo.InvariantCulture, out var reference))
+                    rolls.Add(new(value,reference,reference));
                 return match.Groups["value"].Value;
             });
             display = Regex.Replace(display, @"\s*\((augmented|implicit|enchant|rune|crafted|desecrated|fractured|mutated|vestigial|bonded|scourge|crucible|utility|cosmetic)\)", "");

@@ -2,10 +2,11 @@
 
 A Windows companion for **Path of Exile 2**. Press **Alt+E** to inspect an item, find comparable offers, adjust search filters and compare seller items beside your own.
 
-**[Download v0.4.0-beta.6](https://github.com/blacksheep25/ExileLens/releases/tag/v0.4.0-beta.6)** · Windows 10/11 x64 · MIT
+**[Download v0.4.0-beta.5](https://github.com/blacksheep25/ExileLens/releases/tag/v0.4.0-beta.5)** · Windows 10/11 x64 · MIT
 
+*Draft for the next update: the At a glance overview, value colours, presence-only filters and latest item fixes below are in the local development build and are not yet included in the beta.5 download.*
 
-![Item evaluation](docs/screenshots/price-check.png)
+![Item evaluation](../artifacts/showcase/price-check.png)
 
 *Screenshots show actual application controls with synthetic items, sellers and prices. They are demonstrations, not live market quotes. Rune artwork is loaded before capture.*
 
@@ -18,7 +19,7 @@ A Windows companion for **Path of Exile 2**. Press **Alt+E** to inspect an item,
 - **Inspect more item types:** equipment, tablets and supported exchange items, plus quest-item descriptions with wiki links. Cards include DPS, modifier styling, socket artwork and explicit empty-socket indicators. Seller cards retain granted skills supplied by the trade response. Modified fixed rolls such as `+4(3)` use the actual value for searching, while keeping the reference value in metadata.
 - **Keep useful items:** bookmarks, notes, recent-check navigation and screen pins.
 
-![Item comparison](docs/screenshots/comparison.png)
+![Item comparison](../artifacts/showcase/comparison.png)
 
 ## Market dashboard and in-game tools
 
@@ -28,7 +29,7 @@ A Windows companion for **Path of Exile 2**. Press **Alt+E** to inspect an item,
 - **Encounters and sessions:** encounter reward information, area history from Client.txt and optional manual loot recording.
 - **Desktop controls:** remembered window placement, configurable shortcuts, click-through and dismissal when clicking outside item evaluation.
 
-![Market dashboard](docs/screenshots/market-prices.png)
+![Market dashboard](../artifacts/showcase/market-prices.png)
 
 ## Getting started
 
@@ -71,9 +72,9 @@ English item text only. Character profiles are manually configured locally; acco
 
 ## More information
 
-- [Changelog](CHANGELOG.md)
-- [Feature audit](docs/FEATURE_AUDIT.md)
-- [Screenshot gallery](docs/SCREENSHOTS.md)
-- [Release and validation process](docs/RELEASING.md)
+- [Changelog](../CHANGELOG.md)
+- [Feature audit](FEATURE_AUDIT.md)
+- [Screenshot gallery](SCREENSHOTS.md)
+- [Release and validation process](RELEASING.md)
 
-Licensed under [MIT](LICENSE). See [third-party notices](THIRD_PARTY.md) for dependencies and data attribution. Path of Exile and its artwork belong to Grinding Gear Games; ExileLens is an independent community project.
+Licensed under [MIT](../LICENSE). See [third-party notices](../THIRD_PARTY.md) for dependencies and data attribution. Path of Exile and its artwork belong to Grinding Gear Games; ExileLens is an independent community project.

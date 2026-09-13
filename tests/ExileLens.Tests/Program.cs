@@ -394,6 +394,36 @@ Check(SimilarItems.Score(weightedRing,secondaryPeer)>=.8m,"Matching key ring sta
 var importantPeer=ItemParser.Parse(weightedRing.Details.Replace("+100 to maximum Life","+10 to maximum Life"))!;
 Check(SimilarItems.Score(weightedRing,importantPeer)<.8m,"A major loss of a key ring stat fails valuation threshold");
 Check(SimilarItems.Score(weightedRing,weightedRing with {BaseType="Iron Ring"})==0,"Non-weapon bases remain distinct");
+var overviewSame=ComparisonOverview.Create(skillDpsItem,skillDpsItem,"Physical attacks");
+Check(overviewSame.Verdict.StartsWith("Very similar"),"Overview identical weapon is similar");
+var overviewLoss=ComparisonOverview.Create(skillDpsItem,ItemParser.Parse(skillDpsItem.Details.Replace("+2 to Level","+1 to Level"))!,"Physical attacks");
+Check(overviewLoss.Losses.Length>0 && !overviewLoss.Verdict.StartsWith("Other item"),"Overview cannot call a skill-level loss an upgrade");
+Check(ComparisonOverview.Create(skillDpsItem,skillDpsItem with {Details=skillDpsItem.Details+"\nUnidentified"},"Physical attacks").Verdict.StartsWith("Insufficient"),"Overview never ranks hidden unidentified stats");
+Check(new OverviewStat("Critical Hit Chance",11.17m,13.53m,true).Difference=="+2.36 points","Crit change is percentage points");
+Check(new OverviewStat("Total DPS",100,150).Difference=="+50%","DPS comparison uses relative difference");
+var fixedRollItem=ItemParser.Parse("Item Class: Wands\nRarity: Unique\nAdonia's Ego\nSiphoning Wand\n--------\n+4(3) to Level of all Spell Skills\n-11(-10)% to all Elemental Resistances per Power Charge\n--------\nCorrupted")!;
+var fixedRollAnalysis=ItemAnalysis.From(fixedRollItem);
+Check(fixedRollAnalysis.Lines.Any(l=>l.Text=="+4 to Level of all Spell Skills" && l.Rolls!.Single().Value==4 && l.Rolls.Single().Minimum==3),"Modified fixed skill roll keeps actual value and reference metadata");
+Check(fixedRollAnalysis.Lines.Any(l=>l.Text=="-11% to all Elemental Resistances per Power Charge" && l.Rolls!.Single().Minimum==-10),"Negative fixed roll removes reference from filter text");
+Check(ComparableMarket.Signature(fixedRollAnalysis.Lines.First().Text)==ComparableMarket.Signature("+3 to Level of all Spell Skills"),"Fixed roll maps to ordinary trade stat signature");
+var radiusItem=ItemParser.Parse("Item Class: Jewels\nRarity: Rare\nKraken Spark\nTime-Lost Ruby\n--------\nUpgrades Radius to Medium — Unscalable Value\n15% increased Effect of Notable Passive Skills in Radius — Unscalable Value")!;
+var radiusLines=ItemAnalysis.From(radiusItem).Lines;
+Check(radiusLines[0].Text=="Upgrades Radius to Medium", "Radius presence filter removes unscalable annotation");
+var unscaledFilter=new EvaluationFilter(radiusLines[1]); unscaledFilter.Preset(true);
+Check(unscaledFilter.Minimum=="15" && !unscaledFilter.AllowsBroad,"Unscalable numeric roll stays exact in broad mode");
+using(var radiusCatalogue=JsonDocument.Parse("{\"result\":[{\"entries\":[{\"id\":\"explicit.radius\",\"text\":\"Upgrades Radius to Medium\"}]}]}"))
+{
+ var request=new ComparableRequest(radiusItem,"Demo","Auto",new[]{new PriceConstraint(radiusLines[0].Text,null,null,Kind:radiusLines[0].Kind)},false,false,null);
+ Check(LiveTradeClient.BuildQuery(request,radiusCatalogue.RootElement).Contains("explicit.radius"),"Radius modifier builds a presence-only trade query");
+ var doc=new ListingDocument("Demo","fixture",DateTimeOffset.UtcNow,new[]{new ImportedListing("radius","seller",new ListingPrice(1,"Divine Orb"),radiusItem.Details,DateTimeOffset.UtcNow,true,true)});
+ var market=ComparableMarket.Parse(JsonSerializer.Serialize(doc),DateTimeOffset.UtcNow);
+ Check(market.Search(request,DateTimeOffset.UtcNow).Rows.Count==1,"Presence-only modifier survives local listing filtering");
+}
+Check(SocketAugments.Match("Wands","+1 to Level of all Spell Skills")=="Hedgewitch Assandra's Rune of Wisdom","Positive clipboard sign resolves wand rune catalogue");
+Check(SocketAugments.Match("Wands","-1 to Level of all Spell Skills")==null,"Socket normalization preserves negative signs");
+var wandSocketItem=ItemParser.Parse("Item Class: Wands\nRarity: Unique\nAdonia's Ego\nSiphoning Wand\n--------\nSockets: S\n--------\n+1 to Level of all Spell Skills (rune)")!;
+var wandSocket=new SocketArtworkCatalog().Resolve(ItemSockets.From(wandSocketItem).Single());
+Check(wandSocket.Name=="Hedgewitch Assandra's Rune of Wisdom" && wandSocket.IconUrl!=null && wandSocket.Inferred,"Copied wand resolves rune identity and artwork while preserving inference label");
 var runeCatalog = new[] { new EconomyRow("Greater Iron Rune","","",5,"Exalted Orb",null,null),new EconomyRow("Perfect Iron Rune","","",50,"Exalted Orb",null,null),new EconomyRow("Iron Rune","","",1,"Exalted Orb",null,null), new EconomyRow("Countess Seske's Rune of Archery","","",80,"Exalted Orb",null,null) };
 Check(RuneNames.Match("GREATER IRON RUNE",90,runeCatalog)?.Row.Value == 5, "Rune OCR exact names preserve tier");
 Check(RuneNames.Match("2x Greater Iron Rune",90,runeCatalog)?.PriceLabel.Contains("10 Exalted") == true, "Rune choices include stack total");
