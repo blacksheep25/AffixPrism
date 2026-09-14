@@ -11,6 +11,8 @@ try {
     if (Test-Path -LiteralPath $output) { Remove-Item -LiteralPath $output -Recurse -Force }
     dotnet publish src/AffixPrism -c Release -r win-x64 --self-contained true -p:Version=$Version -o $output --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Publish failed' }
+    # Development symbols contain local source paths and are not needed to run the app.
+    Get-ChildItem -LiteralPath $output -File -Filter '*.pdb' | Remove-Item -Force
     Copy-Item LICENSE,THIRD_PARTY.md,CHANGELOG.md -Destination $output
     @'
 AffixPrism for Windows x64
