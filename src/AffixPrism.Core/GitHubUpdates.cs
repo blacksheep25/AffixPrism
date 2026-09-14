@@ -28,7 +28,7 @@ public static class GitHubUpdates
             string name=$"AffixPrism-{tag.TrimStart('v')}-win-x64.zip";
             string? Asset(string n)=>release.GetProperty("assets").EnumerateArray().FirstOrDefault(a=>a.GetProperty("name").GetString()==n) is var asset && asset.ValueKind==JsonValueKind.Object ? asset.GetProperty("browser_download_url").GetString() : null;
             var zip=Asset(name); var checksum=Asset(name+".sha256");
-            if(zip==null||checksum==null||!(zip.StartsWith(Repository+"/releases/download/",StringComparison.Ordinal) || zip.StartsWith(LegacyMigration.PreviousRepository+"/releases/download/",StringComparison.Ordinal))||checksum!=zip+".sha256")continue;
+            if(zip==null||checksum==null||!(zip.StartsWith(Repository+"/releases/download/",StringComparison.Ordinal))||checksum!=zip+".sha256")continue;
             best=new(tag,release.GetProperty("body").GetString()??"",Repository+"/releases/tag/"+tag,zip,checksum);
         }
         return best;

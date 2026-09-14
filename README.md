@@ -49,7 +49,7 @@ Exit the previous tray instance before upgrading. Settings remain in `%LOCALAPPD
 
 ## Updating
 
-**Moving from ExileLens:** install this release manually once after the repository rename. Exit ExileLens, extract the AffixPrism ZIP and run `AffixPrism.exe`. Existing settings and bookmarks migrate automatically. Older updaters cannot recognise the renamed repository.
+**Manual installation:** install this release manually once after the repository rename. Exit the previous app, extract the AffixPrism ZIP and run `AffixPrism.exe`. Older updaters cannot recognise the renamed repository.
 
 Open **Settings → Application updates**. Startup checks are on, automatic downloads are off, and beta releases are included by default. Downloads do not interrupt play; installing requires **Update and restart**. Your settings and bookmarks remain in LocalAppData.
 
@@ -100,4 +100,4 @@ Licensed under [MIT](LICENSE). See [third-party notices](THIRD_PARTY.md) for dep
 
 ## Moving to AffixPrism
 
-Your existing settings and history are imported on first launch when no AffixPrism profile exists. Original files are left intact. Update availability is shown in a persistent banner with a direct download/install action; verified pending updates survive restart. Automatic checks run every 30 minutes when enabled.
+Update availability is shown in a persistent banner with a direct download/install action; verified pending updates survive restart. Automatic checks run every 30 minutes when enabled.

@@ -15,9 +15,7 @@ public partial class App : Application
         WindowPlacement.Disabled = smoke;
         if (!smoke)
         {
-            try { Core.LegacyMigration.Import(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)); }
-            catch (Exception ex) when(ex is IOException or UnauthorizedAccessException) { MessageBox.Show("Could not import your previous settings: " + ex.Message, "AffixPrism"); Shutdown(); return; }
-            instance = new Mutex(true, @"Local\" + Core.LegacyMigration.PreviousName + "-Overlay", out bool created);
+            instance = new Mutex(true, @"Local\AffixPrism-Overlay", out bool created);
             if (!created)
             {
                 MessageBox.Show("AffixPrism is already running. Use its notification-tray icon to reopen it, or exit the old instance before updating.", "AffixPrism");

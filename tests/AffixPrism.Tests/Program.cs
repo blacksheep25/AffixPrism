@@ -451,18 +451,6 @@ Check(RuneNames.Match("Perfect Iron Rune",90,runeCatalog.Take(1).ToArray()) == n
 Check(RuneNames.Match("Choose your reward",99,runeCatalog) == null, "Unrelated menu text has no guessed price");
 Check(RuneNames.Match("Iron Rune",90,runeCatalog.Concat(new[] {runeCatalog[2]}).ToArray()) == null, "Ambiguous market identities are rejected");
 await ReliabilityChecks.Run(Check);
-var migrationRoot=Path.Combine(Path.GetTempPath(),"AffixPrism-migration-test-"+Guid.NewGuid().ToString("N"));
-try
-{
-    string oldData=Path.Combine(migrationRoot,LegacyMigration.PreviousName), newData=Path.Combine(migrationRoot,"AffixPrism");
-    Directory.CreateDirectory(Path.Combine(oldData,"windows")); Directory.CreateDirectory(Path.Combine(oldData,"updates"));
-    File.WriteAllText(Path.Combine(oldData,"settings.json"),"original settings"); File.WriteAllText(Path.Combine(oldData,"windows","layout.json"),"layout"); File.WriteAllText(Path.Combine(oldData,"updates","pending.json"),"obsolete job");
-    Check(LegacyMigration.Import(migrationRoot) && File.ReadAllText(Path.Combine(newData,"settings.json"))=="original settings" && File.Exists(Path.Combine(newData,"windows","layout.json")),"Brand migration preserves settings and window history");
-    Check(!Directory.Exists(Path.Combine(newData,"updates")) && File.Exists(Path.Combine(oldData,"settings.json")),"Brand migration skips old updater jobs and leaves originals intact");
-    File.WriteAllText(Path.Combine(newData,"settings.json"),"new settings");
-    Check(!LegacyMigration.Import(migrationRoot) && File.ReadAllText(Path.Combine(newData,"settings.json"))=="new settings","Brand migration never overwrites the new profile");
-}
-finally { if(Directory.Exists(migrationRoot))Directory.Delete(migrationRoot,true); }
 Console.WriteLine($"{checks} checks passed.");
 
 sealed class CaptureFake : IItemCapturePlatform

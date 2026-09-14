@@ -1,4 +1,4 @@
-param([string]$Version = '0.4.0-beta.9', [switch]$LegacyBridge)
+param([string]$Version = '0.4.0-beta.9')
 $ErrorActionPreference = 'Stop'
 if ($Version -notmatch '^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$') { throw 'Invalid version' }
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -6,6 +6,9 @@ Push-Location $projectRoot
 try {
     $output = Join-Path $projectRoot 'artifacts/build'
     if (Get-Process AffixPrism -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq (Join-Path $output 'AffixPrism.exe') }) { throw 'Exit the running build before packaging.' }
+    $expectedOutput = [IO.Path]::GetFullPath((Join-Path $projectRoot 'artifacts/build'))
+    if ([IO.Path]::GetFullPath($output) -ne $expectedOutput -or (Test-Path -LiteralPath $output) -and ((Get-Item -LiteralPath $output).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Unsafe build directory' }
+    if (Test-Path -LiteralPath $output) { Remove-Item -LiteralPath $output -Recurse -Force }
     dotnet publish src/AffixPrism -c Release -r win-x64 --self-contained true -p:Version=$Version -o $output --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Publish failed' }
     Copy-Item LICENSE,THIRD_PARTY.md,CHANGELOG.md -Destination $output
@@ -21,19 +24,11 @@ Settings remain in %LOCALAPPDATA%\AffixPrism. Extract upgrades to a new folder; 
 Experimental beta: trade access and estimates are not guaranteed. Prices are asking prices, not completed sales.
 https://github.com/blacksheep25/AffixPrism
 '@ | Set-Content (Join-Path $output 'START-HERE.txt')
-    # Transitional aliases are required by the previously released updater.
-    $previousName = 'ExileLens'
-    $legacyApp = Join-Path $output ($previousName + '.exe')
-    if ($LegacyBridge) { Copy-Item -LiteralPath (Join-Path $output 'AffixPrism.exe') -Destination $legacyApp }
-    elseif (Test-Path -LiteralPath $legacyApp) { Remove-Item -LiteralPath $legacyApp }
+    $launchers = @(Get-ChildItem -LiteralPath $output -File -Filter '*.exe')
+    if (-not (Test-Path -LiteralPath (Join-Path $output 'AffixPrism.exe')) -or @($launchers | Where-Object Name -notin @('AffixPrism.exe','createdump.exe')).Count -gt 0) { throw 'Unexpected launcher in package. Only AffixPrism and the bundled .NET crash helper are allowed.' }
     $archive = Join-Path $projectRoot "artifacts/AffixPrism-$Version-win-x64.zip"
-    Compress-Archive -Path (Join-Path $output '*') -DestinationPath $archive -CompressionLevel Optimal
+    Compress-Archive -Path (Join-Path $output '*') -DestinationPath $archive -CompressionLevel Optimal -Force
     $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
     "$hash  $([IO.Path]::GetFileName($archive))" | Set-Content "$archive.sha256" -Encoding ascii
-    if ($LegacyBridge) {
-        $alias = Join-Path $projectRoot "artifacts/$previousName-$Version-win-x64.zip"
-        Copy-Item -LiteralPath $archive -Destination $alias
-        "$hash  $([IO.Path]::GetFileName($alias))" | Set-Content "$alias.sha256" -Encoding ascii
-    }
     Write-Output $archive
 } finally { Pop-Location }
