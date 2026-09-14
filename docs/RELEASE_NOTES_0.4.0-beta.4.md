@@ -1,4 +1,4 @@
-# ExileLens 0.4.0-beta.4 — Clearer comparisons and market prices
+# AffixPrism 0.4.0-beta.4 — Clearer comparisons and market prices
 
 - Redesigned the dashboard, fixed Session overlap, and added a dedicated Rune Helper page.
 - Added searchable stat filters and visible search controls. Broad matching preserves skill levels, requirements and other discrete values.

@@ -1,6 +1,6 @@
 # Screenshot gallery
 
-These are renders of actual ExileLens Windows controls from the included smoke/showcase workflow. All prices, seller accounts and warning profiles are synthetic demonstration fixtures. No screenshots of private desktops, chat or account data are included. Artwork is intentionally absent where the isolated fixture has no external icon URL.
+These are renders of actual AffixPrism Windows controls from the included smoke/showcase workflow. All prices, seller accounts and warning profiles are synthetic demonstration fixtures. No screenshots of private desktops, chat or account data are included. Artwork is intentionally absent where the isolated fixture has no external icon URL.
 
 ## Item evaluation
 
@@ -36,4 +36,4 @@ The helper exposes recognition details and local scan controls. The separate ann
 
 ## Regeneration
 
-From the repository root on a Windows desktop, run `dotnet run --project src/ExileLens -c Release -- --smoke-test`. Main showcase files appear in `artifacts/showcase`; the other captures are under `artifacts`. Curated copies live in this folder's `screenshots` directory. Review new captures before replacing the published images.
+From the repository root on a Windows desktop, run `dotnet run --project src/AffixPrism -c Release -- --smoke-test`. Main showcase files appear in `artifacts/showcase`; the other captures are under `artifacts`. Curated copies live in this folder's `screenshots` directory. Review new captures before replacing the published images.

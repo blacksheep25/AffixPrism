@@ -1,8 +1,8 @@
-# ExileLens
+# AffixPrism
 
 A Windows companion for **Path of Exile 2**. Press **Alt+E** to inspect an item, find comparable offers, adjust search filters and compare seller items beside your own.
 
-**[Download v0.4.0-beta.5](https://github.com/blacksheep25/ExileLens/releases/tag/v0.4.0-beta.5)** · Windows 10/11 x64 · MIT
+**[Download v0.4.0-beta.5](https://github.com/blacksheep25/AffixPrism/releases/tag/v0.4.0-beta.5)** · Windows 10/11 x64 · MIT
 
 *Draft for the next update: the At a glance overview, value colours, presence-only filters and latest item fixes below are in the local development build and are not yet included in the beta.5 download.*
 
@@ -33,36 +33,36 @@ A Windows companion for **Path of Exile 2**. Press **Alt+E** to inspect an item,
 
 ## Getting started
 
-1. Download the Windows x64 ZIP from [Releases](https://github.com/blacksheep25/ExileLens/releases). Extract every file and run `ExileLens.exe`. .NET is bundled; native Rune Helper OCR may require the Microsoft Visual C++ 2015–2022 x64 runtime.
+1. Download the Windows x64 ZIP from [Releases](https://github.com/blacksheep25/AffixPrism/releases). Extract every file and run `AffixPrism.exe`. .NET is bundled; native Rune Helper OCR may require the Microsoft Visual C++ 2015–2022 x64 runtime.
 2. Select your league in **Settings**. Choose your game's `logs/Client.txt` for area detection.
 3. Run POE2 in windowed or borderless mode. Hover an item and press **Alt+E**.
 4. Use **Ctrl+Alt+O** to show or hide the main panel. Open **Rune Helper** from the sidebar to configure rune recognition.
 
-Exit the previous tray instance before upgrading. Settings remain in `%LOCALAPPDATA%\ExileLens`, outside the installation folder.
+Exit the previous tray instance before upgrading. Settings remain in `%LOCALAPPDATA%\AffixPrism`, outside the installation folder.
 
 ## Build from source
 
 Requires Windows and the **.NET 8 SDK**. Run from the repository root:
 
 ```powershell
-git clone https://github.com/blacksheep25/ExileLens.git
-cd ExileLens
-dotnet run --project src/ExileLens -c Release
+git clone https://github.com/blacksheep25/AffixPrism.git
+cd AffixPrism
+dotnet run --project src/AffixPrism -c Release
 ```
 
 Build and validate:
 
 ```powershell
-dotnet run --project tests/ExileLens.Tests -c Release
-dotnet publish src/ExileLens -c Release -r win-x64 --self-contained true -o artifacts/build
-dotnet run --project src/ExileLens -c Release -- --smoke-test
+dotnet run --project tests/AffixPrism.Tests -c Release
+dotnet publish src/AffixPrism -c Release -r win-x64 --self-contained true -o artifacts/build
+dotnet run --project src/AffixPrism -c Release -- --smoke-test
 ```
 
 Exit the running build before replacing it. Local builds reuse `artifacts/build`. UI smoke checks require a Windows desktop and generate fixture screenshots; they do not establish live-market accuracy or compatibility with every game/display setup.
 
 ## Data and limitations
 
-ExileLens is a beta. Prices are **asking prices**, not completed sales or guaranteed values. Similarity uses a limited fetched sample. Missing rates, ambiguous sockets, unsupported modifiers and service availability can limit results. Green/red comparisons indicate higher/lower numbers; whether that improves your build depends on its mechanics. Missing source stats remain unknown rather than being treated as zero.
+AffixPrism is a beta. Prices are **asking prices**, not completed sales or guaranteed values. Similarity uses a limited fetched sample. Missing rates, ambiguous sockets, unsupported modifiers and service availability can limit results. Green/red comparisons indicate higher/lower numbers; whether that improves your build depends on its mechanics. Missing source stats remain unknown rather than being treated as zero.
 
 Trade searches send item/filter information to Path of Exile's trade website. Economy prices come from poe.ninja; artwork can load from official item-image hosts. Requests respect cooldowns, but rate limits and verification challenges can still prevent results.
 
@@ -77,4 +77,4 @@ English item text only. Character profiles are manually configured locally; acco
 - [Screenshot gallery](SCREENSHOTS.md)
 - [Release and validation process](RELEASING.md)
 
-Licensed under [MIT](../LICENSE). See [third-party notices](../THIRD_PARTY.md) for dependencies and data attribution. Path of Exile and its artwork belong to Grinding Gear Games; ExileLens is an independent community project.
+Licensed under [MIT](../LICENSE). See [third-party notices](../THIRD_PARTY.md) for dependencies and data attribution. Path of Exile and its artwork belong to Grinding Gear Games; AffixPrism is an independent community project.

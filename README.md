@@ -1,8 +1,10 @@
-# ExileLens
+# AffixPrism
+
+![AffixPrism](docs/branding/affixprism-logo.png)
 
 A Windows companion for **Path of Exile 2**. Press **Alt+E** to inspect an item, find comparable offers, adjust search filters and compare seller items beside your own.
 
-**[Download v0.4.0-beta.8](https://github.com/blacksheep25/ExileLens/releases/tag/v0.4.0-beta.8)** · Windows 10/11 x64 · MIT
+**[Download v0.4.0-beta.9](https://github.com/blacksheep25/AffixPrism/releases/tag/v0.4.0-beta.9)** · Windows 10/11 x64 · MIT
 
 
 ![Item evaluation](docs/screenshots/price-check.png)
@@ -31,20 +33,23 @@ A Windows companion for **Path of Exile 2**. Press **Alt+E** to inspect an item,
 - **Encounters and sessions:** encounter reward information, area history from Client.txt and optional manual loot recording.
 - **Clear search progress:** listing page numbers and a live request-spacing countdown explain multi-page searches. Cached results avoid unnecessary catalogue requests; server cooldowns remain respected.
 - **Application updates:** startup and manual GitHub release checks, optional automatic downloads, beta-channel selection, SHA-256 verification and **Update and restart**. The previous installation is retained, with rollback for detected installation/startup failures.
+- **AffixPrism theme:** charcoal-green surfaces, ivory text and gold accents match the logo, with cyan focus indicators. Game item colours and green/red comparisons keep their meaning.
 - **Desktop controls:** remembered window placement, configurable shortcuts, click-through and dismissal when clicking outside item evaluation.
 
 ![Market dashboard](docs/screenshots/market-prices.png)
 
 ## Getting started
 
-1. Download the Windows x64 ZIP from [Releases](https://github.com/blacksheep25/ExileLens/releases). Extract every file and run `ExileLens.exe`. .NET is bundled; native Rune Helper OCR may require the Microsoft Visual C++ 2015–2022 x64 runtime.
+1. Download the Windows x64 ZIP from [Releases](https://github.com/blacksheep25/AffixPrism/releases). Extract every file and run `AffixPrism.exe`. .NET is bundled; native Rune Helper OCR may require the Microsoft Visual C++ 2015–2022 x64 runtime.
 2. Select your league in **Settings**. Choose your game's `logs/Client.txt` for area detection.
 3. Run POE2 in windowed or borderless mode. Hover an item and press **Alt+E**.
 4. Use **Ctrl+Alt+O** to show or hide the main panel. Open **Rune Helper** from the sidebar to configure rune recognition.
 
-Exit the previous tray instance before upgrading. Settings remain in `%LOCALAPPDATA%\ExileLens`, outside the installation folder.
+Exit the previous tray instance before upgrading. Settings remain in `%LOCALAPPDATA%\AffixPrism`, outside the installation folder.
 
 ## Updating
+
+**Moving from ExileLens:** install this release manually once after the repository rename. Exit ExileLens, extract the AffixPrism ZIP and run `AffixPrism.exe`. Existing settings and bookmarks migrate automatically. Older updaters cannot recognise the renamed repository.
 
 Open **Settings → Application updates**. Startup checks are on, automatic downloads are off, and beta releases are included by default. Downloads do not interrupt play; installing requires **Update and restart**. Your settings and bookmarks remain in LocalAppData.
 
@@ -55,24 +60,24 @@ Users on beta.6 or earlier need to manually install beta.7 once to receive the u
 Requires Windows and the **.NET 8 SDK**. Run from the repository root:
 
 ```powershell
-git clone https://github.com/blacksheep25/ExileLens.git
-cd ExileLens
-dotnet run --project src/ExileLens -c Release
+git clone https://github.com/blacksheep25/AffixPrism.git
+cd AffixPrism
+dotnet run --project src/AffixPrism -c Release
 ```
 
 Build and validate:
 
 ```powershell
-dotnet run --project tests/ExileLens.Tests -c Release
-dotnet publish src/ExileLens -c Release -r win-x64 --self-contained true -o artifacts/build
-dotnet run --project src/ExileLens -c Release -- --smoke-test
+dotnet run --project tests/AffixPrism.Tests -c Release
+dotnet publish src/AffixPrism -c Release -r win-x64 --self-contained true -o artifacts/build
+dotnet run --project src/AffixPrism -c Release -- --smoke-test
 ```
 
 Exit the running build before replacing it. Local builds reuse `artifacts/build`. UI smoke checks require a Windows desktop and generate fixture screenshots; they do not establish live-market accuracy or compatibility with every game/display setup.
 
 ## Data and limitations
 
-ExileLens is a beta. Prices are **asking prices**, not completed sales or guaranteed values. Similarity uses a limited fetched sample. Missing rates, ambiguous sockets, unsupported modifiers and service availability can limit results. Green/red comparisons indicate higher/lower numbers; whether that improves your build depends on its mechanics. Missing source stats remain unknown rather than being treated as zero.
+AffixPrism is a beta. Prices are **asking prices**, not completed sales or guaranteed values. Similarity uses a limited fetched sample. Missing rates, ambiguous sockets, unsupported modifiers and service availability can limit results. Green/red comparisons indicate higher/lower numbers; whether that improves your build depends on its mechanics. Missing source stats remain unknown rather than being treated as zero.
 
 Trade searches send item/filter information to Path of Exile's trade website. Economy prices come from poe.ninja; artwork can load from official item-image hosts. Requests respect cooldowns, but rate limits and verification challenges can still prevent results.
 
@@ -87,8 +92,12 @@ English item text only. Character profiles are manually configured locally; acco
 - [Screenshot gallery](docs/SCREENSHOTS.md)
 - [Release and validation process](docs/RELEASING.md)
 
-Licensed under [MIT](LICENSE). See [third-party notices](THIRD_PARTY.md) for dependencies and data attribution. Path of Exile and its artwork belong to Grinding Gear Games; ExileLens is an independent community project.
+Licensed under [MIT](LICENSE). See [third-party notices](THIRD_PARTY.md) for dependencies and data attribution. Path of Exile and its artwork belong to Grinding Gear Games; AffixPrism is an independent community project.
 
 ### Currency checks
 
 ![Compact currency check with illustrative demo prices](docs/screenshots/currency-check.png)
+
+## Moving to AffixPrism
+
+Your existing settings and history are imported on first launch when no AffixPrism profile exists. Original files are left intact. Update availability is shown in a persistent banner with a direct download/install action; verified pending updates survive restart. Automatic checks run every 30 minutes when enabled.

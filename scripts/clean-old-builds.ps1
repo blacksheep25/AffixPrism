@@ -4,8 +4,8 @@ param()
 $ErrorActionPreference = 'Stop'
 $artifactRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../artifacts'))
 $keepBuild = Join-Path $artifactRoot 'build'
-if (-not (Test-Path -LiteralPath (Join-Path $keepBuild 'ExileLens.exe'))) {
-    throw 'The latest artifacts/build/ExileLens.exe is missing. Nothing was deleted.'
+if (-not (Test-Path -LiteralPath (Join-Path $keepBuild 'AffixPrism.exe'))) {
+    throw 'The latest artifacts/build/AffixPrism.exe is missing. Nothing was deleted.'
 }
 
 # Artifacts contains generated output and temporary research/checkouts only.

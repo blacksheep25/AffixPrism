@@ -1,0 +1,50 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <Color x:Key="Theme.BackgroundColor">#101411</Color>
+ <Color x:Key="Theme.SurfaceColor">#1A211E</Color>
+ <Color x:Key="Theme.ControlColor">#222B26</Color>
+ <Color x:Key="Theme.HoverColor">#2D3B33</Color>
+ <Color x:Key="Theme.SelectedColor">#393725</Color>
+ <Color x:Key="Theme.BorderColor">#46534A</Color>
+ <Color x:Key="Theme.DividerColor">#303C34</Color>
+ <Color x:Key="Theme.TextColor">#EDE7D5</Color>
+ <Color x:Key="Theme.MutedColor">#A6B2A9</Color>
+ <Color x:Key="Theme.GoldColor">#D5B56A</Color>
+ <Color x:Key="Theme.CyanColor">#42CAE3</Color>
+ <Color x:Key="Theme.VioletColor">#9B74E0</Color>
+ <Color x:Key="Theme.WarningColor">#E9B64D</Color>
+ <Color x:Key="Theme.WarningSurfaceColor">#332D1B</Color>
+ <SolidColorBrush x:Key="Theme.Background" Color="{StaticResource Theme.BackgroundColor}"/>
+ <SolidColorBrush x:Key="Theme.Surface" Color="{StaticResource Theme.SurfaceColor}"/>
+ <SolidColorBrush x:Key="Theme.Control" Color="{StaticResource Theme.ControlColor}"/>
+ <SolidColorBrush x:Key="Theme.Hover" Color="{StaticResource Theme.HoverColor}"/>
+ <SolidColorBrush x:Key="Theme.Selected" Color="{StaticResource Theme.SelectedColor}"/>
+ <SolidColorBrush x:Key="Theme.Border" Color="{StaticResource Theme.BorderColor}"/>
+ <SolidColorBrush x:Key="Theme.Divider" Color="{StaticResource Theme.DividerColor}"/>
+ <SolidColorBrush x:Key="Theme.Text" Color="{StaticResource Theme.TextColor}"/>
+ <SolidColorBrush x:Key="Theme.Muted" Color="{StaticResource Theme.MutedColor}"/>
+ <SolidColorBrush x:Key="Theme.Gold" Color="{StaticResource Theme.GoldColor}"/>
+ <SolidColorBrush x:Key="Theme.Cyan" Color="{StaticResource Theme.CyanColor}"/>
+ <SolidColorBrush x:Key="Theme.Violet" Color="{StaticResource Theme.VioletColor}"/>
+ <SolidColorBrush x:Key="Theme.Warning" Color="{StaticResource Theme.WarningColor}"/>
+ <SolidColorBrush x:Key="Theme.WarningSurface" Color="{StaticResource Theme.WarningSurfaceColor}"/>
+ <Style TargetType="ToolTip"><Setter Property="Background" Value="{StaticResource Theme.Surface}"/><Setter Property="Foreground" Value="{StaticResource Theme.Text}"/><Setter Property="BorderBrush" Value="{StaticResource Theme.Border}"/><Setter Property="Padding" Value="12"/></Style>
+  <Style TargetType="CheckBox">
+  <Setter Property="Foreground" Value="{StaticResource Theme.Text}"/>
+  <Setter Property="VerticalContentAlignment" Value="Center"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="CheckBox">
+   <Grid Background="Transparent"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
+    <Border x:Name="Box" Width="14" Height="14" VerticalAlignment="Center" Background="{StaticResource Theme.Control}" BorderBrush="{StaticResource Theme.Border}" BorderThickness="1" CornerRadius="2">
+     <Grid><Path x:Name="Tick" Visibility="Collapsed" Data="M 2 6 L 5 9 L 11 2" Stroke="{StaticResource Theme.Gold}" StrokeThickness="1.8"/><Border x:Name="Mixed" Visibility="Collapsed" Height="2" Margin="3,0" Background="{StaticResource Theme.Gold}" VerticalAlignment="Center"/></Grid>
+    </Border>
+    <ContentPresenter Grid.Column="1" Margin="7,0,0,0" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" RecognizesAccessKey="True"/>
+   </Grid>
+   <ControlTemplate.Triggers>
+    <Trigger Property="IsChecked" Value="True"><Setter TargetName="Tick" Property="Visibility" Value="Visible"/><Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource Theme.Gold}"/></Trigger>
+    <Trigger Property="IsChecked" Value="{x:Null}"><Setter TargetName="Mixed" Property="Visibility" Value="Visible"/></Trigger>
+    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Box" Property="Background" Value="{StaticResource Theme.Hover}"/></Trigger>
+    <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource Theme.Cyan}"/></Trigger>
+    <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45"/></Trigger>
+   </ControlTemplate.Triggers>
+  </ControlTemplate></Setter.Value></Setter>
+ </Style>
+</ResourceDictionary>

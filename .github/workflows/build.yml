@@ -11,8 +11,8 @@ jobs:
         with:
           dotnet-version: 8.0.x
       - name: Core checks
-        run: dotnet run --project tests/ExileLens.Tests -c Release
+        run: dotnet run --project tests/AffixPrism.Tests -c Release
       - name: Build desktop
-        run: dotnet build src/ExileLens -c Release --nologo
+        run: dotnet build src/AffixPrism -c Release --nologo
       - name: Build optional service
-        run: dotnet build src/ExileLens.MarketService -c Release --nologo
+        run: dotnet build src/AffixPrism.MarketService -c Release --nologo

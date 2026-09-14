@@ -6,9 +6,9 @@ Inspected 9 September 2026. Source installation: `%LOCALAPPDATA%\Programs\PoE Ov
 
 ## Scope and evidence
 
-Read-only inspection of the installed ASAR archive and plugin filenames/metadata strings. The package identifies itself as PoE Overlay II Standalone **1.64.1**, Electron **42.7.1**, by Kyusung Interactive Co., Ltd. Its package license field is `UNLICENSED`. No application code was executed, installation files changed, account/session data read, or remote trade requests made in this review. Exile Lens implementation was not changed by this review.
+Read-only inspection of the installed ASAR archive and plugin filenames/metadata strings. The package identifies itself as PoE Overlay II Standalone **1.64.1**, Electron **42.7.1**, by Kyusung Interactive Co., Ltd. Its package license field is `UNLICENSED`. No application code was executed, installation files changed, account/session data read, or remote trade requests made in this review. AffixPrism implementation was not changed by this review.
 
-Selected bundles were extracted locally under ignored `artifacts/poe-overlay-research` for searching. They are reference material, not Exile Lens source or distributable assets. Findings below are paraphrases of observed behavior.
+Selected bundles were extracted locally under ignored `artifacts/poe-overlay-research` for searching. They are reference material, not AffixPrism source or distributable assets. Findings below are paraphrases of observed behavior.
 
 ## Item capture
 
@@ -54,13 +54,13 @@ This is substantially more than opening a trade URL. The installed client's exis
 
 ## Leagues and overlay windows
 
-Its trade-data service fetches league records from its trade-data client, stores league identifiers and display text, and selects the first returned league when none is configured. This differs from Exile Lens's currently selected public economy-list source and explicit user selection.
+Its trade-data service fetches league records from its trade-data client, stores league identifiers and display text, and selects the first returned league when none is configured. This differs from AffixPrism's currently selected public economy-list source and explicit user selection.
 
 The evaluation, guide and inspection panels are declared separately. The evaluation window requests keyboard focus; guide and inspection windows are configured to ignore keyboard events. Consequently, copying their focus behavior alone would miss the associated input-passthrough handling.
 
-## Comparison with Exile Lens
+## Comparison with AffixPrism
 
-| Concern | Installed PoE Overlay II | Current Exile Lens |
+| Concern | Installed PoE Overlay II | Current AffixPrism |
 | --- | --- | --- |
 | Copy concurrency | Busy flag | Busy flag |
 | Keyboard routing | Temporary overlay passthrough around simulated input | Foreground-game check and nonactivating capture-result window |
@@ -74,10 +74,10 @@ The evaluation, guide and inspection panels are declared separately. The evaluat
 
 These were recommendations from the initial review, not the current implementation backlog. Input routing, asynchronous pricing, cancellation, caching and request pacing now exist. Parsing coverage and real-game verification remain ongoing; see FEATURE_AUDIT.md and RELEASING.md for current limitations.
 
-1. Build an Exile Lens input-routing scope that handles its own focused windows explicitly, restores state on every exit path, and does not send inputs to unrelated applications.
+1. Build an AffixPrism input-routing scope that handles its own focused windows explicitly, restores state on every exit path, and does not send inputs to unrelated applications.
 2. Keep the existing freshness check and diagnostics; there is no need to clear the user's clipboard merely to imitate the other application.
 3. Expand item parsing and modifier-to-search-filter mapping using an independently implemented data model and an appropriate data source.
-4. Establish the supported pricing integration, then add asynchronous search/results, cancellation, caching and rate-limit handling inside Exile Lens.
+4. Establish the supported pricing integration, then add asynchronous search/results, cancellation, caching and rate-limit handling inside AffixPrism.
 
 The most useful lesson is the separation of input routing, item parsing and price retrieval—not simply choosing a different fixed delay.
 

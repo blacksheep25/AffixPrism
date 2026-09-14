@@ -25,7 +25,7 @@ Item check is the first/default tab. User-requested configurable one-key-combina
 League selection is a non-editable dropdown populated from the public economy league feed, with caching and an explicitly labeled offline fallback. Item capture uses frame-spaced input, fresh clipboard sequencing and game-focus validation. Local diagnostics contain timing/stage codes only.
 
 ## Brand Commitments
-User selected a compact dark panel and confirmed Exile Lens as the application/project name.
+User selected a compact dark panel and confirmed AffixPrism as the application/project name.
 
 ## Product Principles
 - Keep game visibility and input available.

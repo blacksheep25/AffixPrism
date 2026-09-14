@@ -1,17 +1,17 @@
 > Historical design/review notes. Some implementation status and instructions below are superseded by the root README and docs/FEATURE_AUDIT.md.
 
-# Exile Lens price service
+# AffixPrism price service
 
 The application now has its own local listing service and comparable-price engine. This is not POE Overlay's remote prediction model. The service currently ingests supplied listing datasets; it does not yet collect live rare-item offers. No trade account cookies or third-party application credentials are used.
 
 ## Run
 
-1. Run `artifacts/pricing/market-service/ExileLens.MarketService.exe`. Keep its console open; Ctrl+C stops it.
-2. Exit older overlay instances and run `artifacts/pricing/ExileLens.exe`.
+1. Run `artifacts/pricing/market-service/AffixPrism.MarketService.exe`. Keep its console open; Ctrl+C stops it.
+2. Exit older overlay instances and run `artifacts/pricing/AffixPrism.exe`.
 3. Select your league in Settings, inspect an item, and use **Import listings** in the evaluator.
 4. Select the modifiers and bounds you want, choose currency/status/age, and click **Check prices**. Alt+E automatically checks against the loaded league dataset on subsequent captures.
 
-The service listens only on localhost port 47921. Imported datasets persist under `%LOCALAPPDATA%\ExileLens\market-service`, one file per league. An import replaces that league's dataset. Test runs can isolate storage with `--data-dir <directory>`. The packaged service requires the .NET 8 ASP.NET runtime or SDK.
+The service listens only on localhost port 47921. Imported datasets persist under `%LOCALAPPDATA%\AffixPrism\market-service`, one file per league. An import replaces that league's dataset. Test runs can isolate storage with `--data-dir <directory>`. The packaged service requires the .NET 8 ASP.NET runtime or SDK.
 
 ## How estimates work
 
@@ -51,9 +51,9 @@ The example is illustrative, not market data. Replace all fields with actual sup
 - `GET /health`: service identity and collection capability.
 - `GET /api/leagues`: leagues with loaded datasets.
 - `POST /api/listings/import`: body is a listing document as above.
-- `POST /api/price-check`: body is the serialized `ComparableRequest` from ExileLens.Core: item (with clipboard `details`), league, currency, filters (`text`, `minimum`, `maximum`), onlineOnly, instantBuyOnly, maximumAgeDays.
+- `POST /api/price-check`: body is the serialized `ComparableRequest` from AffixPrism.Core: item (with clipboard `details`), league, currency, filters (`text`, `minimum`, `maximum`), onlineOnly, instantBuyOnly, maximumAgeDays.
 
-POST requests require `X-ExileLens-Client: desktop`. Browser-origin requests are rejected, CORS is disabled, and the listener is loopback only. These are local-process protections, not multi-user authentication; remote hosting would require authentication and transport security.
+POST requests require `X-AffixPrism-Client: desktop`. Browser-origin requests are rejected, CORS is disabled, and the listener is loopback only. These are local-process protections, not multi-user authentication; remote hosting would require authentication and transport security.
 
 ## Validation and next source adapter
 

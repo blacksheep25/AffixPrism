@@ -2,7 +2,7 @@
 
 # Exiled Exchange 2 search review
 
-Reference: https://github.com/Kvan7/Exiled-Exchange-2 at cca30662bf31eaf38bd711e2ec1a6b899a06c40e. Reviewed 2026-09-09. MIT licence retained in src/ExileLens/ThirdParty/Exiled-Exchange-2-LICENSE.txt. ExileLens changes are independently written.
+Reference: https://github.com/Kvan7/Exiled-Exchange-2 at cca30662bf31eaf38bd711e2ec1a6b899a06c40e. Reviewed 2026-09-09. MIT licence retained in src/AffixPrism/ThirdParty/Exiled-Exchange-2-LICENSE.txt. AffixPrism changes are independently written.
 
 Implemented: base/category search, numeric modifier filters, seller status/age, mixed listing currencies, comparison previews. This pass adds physical/elemental/total DPS from displayed values, server equipment filters for DPS/attack rate/critical chance, and up to 30 offers fetched in batches of ten with existing rate limits.
 

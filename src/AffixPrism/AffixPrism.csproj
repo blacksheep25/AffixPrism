@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings><Nullable>enable</Nullable>
+    <AssemblyName>AffixPrism</AssemblyName><ApplicationIcon>Assets/AffixPrism.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../AffixPrism.Core/AffixPrism.Core.csproj" /></ItemGroup>
+  <ItemGroup><Content Include="UpdateHelper.ps1" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" /></ItemGroup>
+<ItemGroup><Resource Include="Assets/AffixPrism.ico" /><Resource Include="Assets/AffixPrism-tray.ico" /></ItemGroup>
+<ItemGroup><Resource Include="Assets/AffixPrism.png" /></ItemGroup>
+<ItemGroup><Resource Include="Assets/empty-socket.png" /></ItemGroup>
+<ItemGroup>
+  <PackageReference Include="Tesseract" Version="5.2.0" />
+</ItemGroup><ItemGroup><Content Include="tessdata/eng.traineddata" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/><Content Include="ThirdParty/*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/></ItemGroup></Project>

@@ -1,8 +1,8 @@
 # Rune choice helper
 
-Open **Guides → Rune choice helper · live prices**, or use the ExileLens tray menu. The tray action also pauses existing scanning.
+Open **Guides → Rune choice helper · live prices**, or use the AffixPrism tray menu. The tray action also pauses existing scanning.
 
-1. Set your league in ExileLens Settings.
+1. Set your league in AffixPrism Settings.
 2. Open the Runeshape reward menu in POE2.
 3. Select choice region, then drag around the reward names and quantity prefixes. Exclude the rune-symbol recipe columns where possible.
 4. Start live prices and return to the game. The helper hides itself; labels appear outside the selected region and do not intercept clicks.
@@ -23,6 +23,6 @@ Leave approximately 300 physical pixels to the right or left of the selected reg
 
 ## Reference and validation
 
-Workflow reviewed against [RuneHelper](https://github.com/Denzeriko/RuneHelper), MIT, commit `02713872fc07826f25153bea3019849ec64fb7ec`. ExileLens uses an independent WPF implementation and the Tesseract .NET wrapper. Reference code is not bundled; the smoke test generates its own OCR image.
+Workflow reviewed against [RuneHelper](https://github.com/Denzeriko/RuneHelper), MIT, commit `02713872fc07826f25153bea3019849ec64fb7ec`. AffixPrism uses an independent WPF implementation and the Tesseract .NET wrapper. Reference code is not bundled; the smoke test generates its own OCR image.
 
 Core tests cover exact/fuzzy/tier/ambiguous matching, low OCR confidence and quantity totals. The WPF smoke test runs the actual bundled native OCR engine against RuneHelper's public sample menu: all ten names were recognised in verification. Rendered labels were checked for overlap. This does not substitute for calibrating the user's live game region or verifying current market availability.

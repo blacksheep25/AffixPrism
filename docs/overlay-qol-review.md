@@ -9,17 +9,17 @@ Sources:
 - https://github.com/Kvan7/Exiled-Exchange-2
 - https://www.poeoverlay.com/faq
 
-## Available in ExileLens
+## Available in AffixPrism
 
 Hotkey item capture; editable stat bounds; exact-base/category filters; selected defaults; physical/elemental/total DPS; total elemental resistance pseudo filter; mixed-currency asking-price comparisons with available recent rates; seller status and age; deduplicated sellers; exact trade query link; bookmarks; pinning; item comparisons; remembered placement; opacity; escape dismissal; session and area tools.
 
-This update: clicking outside ExileLens dismisses the transient price checker, preserves pins and cancels pending lookups. Clicks on other ExileLens controls/windows remain exempt. A visible-window-only mouse-state timer is used because a proposed global hook was rejected by automatic approval review. In-game interaction has not been manually verified. Header context menu adds Reset default filters and Open item wiki.
+This update: clicking outside AffixPrism dismisses the transient price checker, preserves pins and cancels pending lookups. Clicks on other AffixPrism controls/windows remain exempt. A visible-window-only mouse-state timer is used because a proposed global hook was rejected by automatic approval review. In-game interaction has not been manually verified. Header context menu adds Reset default filters and Open item wiki.
 
 ## Comparison findings and outstanding work
 
 Awakened POE Trade documents transient/persistent windows, wiki access, adjustable shortcuts, widgets and pseudo filters. Its guide explicitly describes selecting synergistic filters rather than automatic certainty about value. Exiled Exchange 2 extends that workflow for POE2 with richer item-specific presets and editors.
 
-PoE Overlay's FAQ describes a model trained on real sales for non-exchange estimates. ExileLens has no equivalent sales dataset/model: its suggestions use a limited sample of asking prices. These are not feature-equivalent valuations.
+PoE Overlay's FAQ describes a model trained on real sales for non-exchange estimates. AffixPrism has no equivalent sales dataset/model: its suggestions use a limited sample of asking prices. These are not feature-equivalent valuations.
 
 Remaining substantial gaps: full pseudo-stat coverage, special unique/crafting presets, quality-normalised and edited-item searches, live bulk-exchange offers, complete gem variant pricing, map-danger checks, configurable utility shortcuts/widgets, broader market history, translations, supported authentication/verification flow, and comprehensive live-market validation.
 

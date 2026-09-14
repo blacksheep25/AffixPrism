@@ -28,12 +28,12 @@ The subsequent revision replaces the earlier custom workspace layout: a 30px tit
 
 Market Prices uses the reference's separate category rail, search above compact rows, item artwork, price, provider listing count, history sparklines and favourite actions. Relative official artwork paths and both provider sparkline spellings are supported. Missing points remain gaps, and unavailable listing counts remain dashes. The narrow layout hides the history column to preserve readable prices. Stock is not inferred from trading volume.
 
-The evaluator uses a slim title bar, subdued patterned nameplate and a compact card-to-price layout. Secondary search controls collapse, while bookmark/pin actions remain in the nameplate menu. Comparison cards have matching thin ornamental nameplates and smaller artwork. Original ExileLens branding remains; the reference's proprietary background and character portrait assets are not included.
+The evaluator uses a slim title bar, subdued patterned nameplate and a compact card-to-price layout. Secondary search controls collapse, while bookmark/pin actions remain in the nameplate menu. Comparison cards have matching thin ornamental nameplates and smaller artwork. Original AffixPrism branding remains; the reference's proprietary background and character portrait assets are not included.
 
 Reviewed renders: `artifacts/showcase/reference-home.png`, `market-prices.png`, `price-check.png` and `comparison.png`. Market screenshots contain explicitly labelled isolated demo rows; production uses the economy provider. The known Windows network block remains a separate live-data limitation.
 
 ## Default-filter comparison
 
-Reviewed `renderer/src/web/price-check/filters/create-stat-filters.ts` in the retained Exiled Exchange 2 snapshot. `calculatedStatToFilter` defaults to disabled; specific item categories and the explicit `defaultAllSelected` option enable filters. ExileLens previously auto-selected up to three exact numerical requirements, which could make the first search too restrictive.
+Reviewed `renderer/src/web/price-check/filters/create-stat-filters.ts` in the retained Exiled Exchange 2 snapshot. `calculatedStatToFilter` defaults to disabled; specific item categories and the explicit `defaultAllSelected` option enable filters. AffixPrism previously auto-selected up to three exact numerical requirements, which could make the first search too restrictive.
 
 Beta 3 starts ordinary searches with base/rarity/state constraints and no numerical modifiers. **Suggested filters** applies our category heuristic explicitly. **Broad search** clears numerical selections. Active saved profiles and per-item drafts remain deliberate overrides. Broad asking prices are still not presented as a reliable item valuation without sufficient similar peers.

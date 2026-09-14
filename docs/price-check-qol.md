@@ -8,7 +8,7 @@ Profiles store stat signatures and modifier kinds for the current item class. Ap
 
 The active profile is reused for newly checked items of the same class. Existing per-item draft filters take precedence. **Apply selected** explicitly reapplies the template. Applying a profile invalidates displayed prices but does not automatically issue a search.
 
-Profiles persist in `%LOCALAPPDATA%/ExileLens/filter-profiles.json` (up to 30 profiles). A malformed existing file is preserved and profile writes are disabled for that session.
+Profiles persist in `%LOCALAPPDATA%/AffixPrism/filter-profiles.json` (up to 30 profiles). A malformed existing file is preserved and profile writes are disabled for that session.
 
 ## Active filters and undo
 

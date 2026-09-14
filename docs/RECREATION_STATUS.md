@@ -2,11 +2,11 @@
 
 # POE Overlay II recreation status
 
-Target: closely reproduce the useful POE Overlay II desktop workflows in Exile Lens, with no advertising, sponsored content or ad SDKs. User screenshots are the visual authority. The installed application remains a read-only reference; its program code, assets, identity and service credentials are not included in the Exile Lens build.
+Target: closely reproduce the useful POE Overlay II desktop workflows in AffixPrism, with no advertising, sponsored content or ad SDKs. User screenshots are the visual authority. The installed application remains a read-only reference; its program code, assets, identity and service credentials are not included in the AffixPrism build.
 
 This target is not complete. Avoid describing incremental UI changes as a full recreation.
 
-| Workflow | Exile Lens status | Remaining work |
+| Workflow | AffixPrism status | Remaining work |
 | --- | --- | --- |
 | Alt+E capture | Implemented; previously user-verified | Repeat capture after interacting with focused evaluator |
 | Item card | Structured English parser; rarity colours; advanced metadata hidden | More item classes, languages and special modifier forms |
@@ -21,7 +21,7 @@ This target is not complete. Avoid describing incremental UI changes as a full r
 
 ## Pricing dependency
 
-The installed reference has a search-then-fetch trade integration. Its presence on disk does not grant a new application service access. GGG's public developer documentation currently excludes internal endpoints and says new application registrations are unavailable (https://www.pathofexile.com/developer/docs). Exile Lens currently uses documented public poe.ninja economy data, which cannot provide modifier-based rare valuation. The current development host also rejects HTTPS socket access to that feed. No seller results, reliability scores or valuations may be invented to fill this gap.
+The installed reference has a search-then-fetch trade integration. Its presence on disk does not grant a new application service access. GGG's public developer documentation currently excludes internal endpoints and says new application registrations are unavailable (https://www.pathofexile.com/developer/docs). AffixPrism currently uses documented public poe.ninja economy data, which cannot provide modifier-based rare valuation. The current development host also rejects HTTPS socket access to that feed. No seller results, reliability scores or valuations may be invented to fill this gap.
 
 ## September 9 implementation
 
@@ -33,7 +33,7 @@ Validation: 58 core checks and WPF smoke tests, including the quarterstaff trans
 
 Further read-only inspection of the installed main bundle found that its estimated-value feature sends item data to a remote prediction service on prediction.poeoverlay.com (with separate regional/bulk routing). The client receives predicted price, low/high estimates and confidence. The prediction model itself is not contained in the inspected client implementation. This is distinct from its cookie-authenticated trade-search and result-fetch integration.
 
-A faithful recreation of that behavior therefore requires service access suitable for Exile Lens, or an independently implemented/trained pricing system and usable trade data. Copying the local visual client alone would not supply those capabilities. No request was made to the reference application's prediction service, no service credentials were extracted, and no remote service was represented as belonging to Exile Lens.
+A faithful recreation of that behavior therefore requires service access suitable for AffixPrism, or an independently implemented/trained pricing system and usable trade data. Copying the local visual client alone would not supply those capabilities. No request was made to the reference application's prediction service, no service credentials were extracted, and no remote service was represented as belonging to AffixPrism.
 
 Completion remains blocked on these dependencies; the current application must not be described as a 1:1 recreation. This audit made no cosmetic changes or substituted sample results for live behavior.
 
