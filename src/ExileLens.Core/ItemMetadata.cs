@@ -8,7 +8,7 @@ public static class ItemMetadata
         new MetadataStyle("Gem tags", "#B4B1A5", "Gem tags such as Lineage and Chaos."),
         new MetadataStyle("Instructions", "#96968E", "Socketing and use instructions, italic."),
         new MetadataStyle("Explicit", "#A3A4F2", "Ordinary prefix and suffix stats; tiers and roll ranges remain in tooltips."),
-        new MetadataStyle("Implicit", "#B4B1A5", "Ordinary base implicit stats use neutral grey, separated from violet explicit stats."),
+        new MetadataStyle("Implicit", "#A3A4F2", "Ordinary base implicit modifiers use the in-game violet stat colour."),
         new MetadataStyle("Enchant", "#B4E6FF", "Enchantments, identified by source metadata."),
         new MetadataStyle("Rune", "#B4E6FF", "Rune and soul-core socket effects."),
         new MetadataStyle("Crafted", "#B4E6FF", "Crafted modifier; never implies desecration."),
@@ -42,6 +42,7 @@ public static class ItemMetadata
         foreach (string type in new[] { "Fractured", "Crafted", "Desecrated", "Mutated", "Vestigial", "Bonded", "Scourge", "Crucible", "Utility", "Cosmetic" })
             if (metadata.Contains(type, StringComparison.OrdinalIgnoreCase)) return type;
         if (line.Text.StartsWith("Bonded:",StringComparison.Ordinal)) return "Bonded";
+        if (line.Kind is "Item text" or "Implicit" or "Enchant" && line.Text.StartsWith("Allocates ", StringComparison.OrdinalIgnoreCase)) return "Enchant";
         if (Styles.Any(s => s.Name == line.Kind)) return line.Kind;
         if (metadata.Contains("Unique Modifier",StringComparison.OrdinalIgnoreCase)) return "Explicit";
         if (metadata.Length > 0 && !metadata.Contains("Prefix",StringComparison.OrdinalIgnoreCase) && !metadata.Contains("Suffix",StringComparison.OrdinalIgnoreCase) && !metadata.Contains("Explicit",StringComparison.OrdinalIgnoreCase)) return "Unknown";

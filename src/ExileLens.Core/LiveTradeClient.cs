@@ -23,7 +23,7 @@ public sealed class LiveTradeClient(HttpClient http)
             if (cache.TryGetValue(cacheKey, out var saved) && DateTimeOffset.UtcNow - saved.At < TimeSpan.FromMinutes(2))
                 return saved.Result with { Source = saved.Result.Source + " · cached (under 2 minutes)" };
             if(DateTimeOffset.UtcNow>=catalogExpires) { statCatalog=null; filterCatalog=null; catalogExpires=DateTimeOffset.UtcNow.AddMinutes(30); }
-            if (request.Filters.Any(x => x.Kind != "Property") && statCatalog == null)
+            if (request.Filters.Any(x => x.Kind != "Property" || x.Text.StartsWith("Grants Skill:", StringComparison.Ordinal)) && statCatalog == null)
                 statCatalog = await SendAsync(HttpMethod.Get, "/api/trade2/data/stats", null, "stats", "Loading trade filters…", token, progress);
             string? category = null;
             if (!request.ExactBase)
@@ -96,7 +96,7 @@ public sealed class LiveTradeClient(HttpClient http)
         { throw new HttpRequestException("Windows blocked ExileLens's connection to pathofexile.com. Check the app's network permissions.", ex); }
         using (response)
         {
-            nextRequests[policy] = Cooldown(response, DateTimeOffset.UtcNow, nextRequests[policy]);
+            nextRequests[policy] = NextRequest(response, DateTimeOffset.UtcNow, nextRequests[policy]);
             if (response.StatusCode == HttpStatusCode.TooManyRequests)
                 throw new HttpRequestException($"Trade rate limit reached. Retry in {Math.Ceiling((nextRequests[policy] - DateTimeOffset.UtcNow).TotalSeconds)} seconds.");
             if (response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.Unauthorized)
@@ -116,6 +116,26 @@ public sealed class LiveTradeClient(HttpClient http)
             if (document.RootElement.TryGetProperty("error", out _)) throw new HttpRequestException("The trade site rejected this query. Check the selected filters.");
             return document.RootElement.Clone();
         }
+    }
+    // A valid server budget replaces the fallback spacing. Requests remain serialized.
+    public static DateTimeOffset NextRequest(HttpResponseMessage response, DateTimeOffset now, DateTimeOffset fallback)
+    {
+        bool hasBudget = false;
+        foreach (var header in response.Headers.Where(h => h.Key.StartsWith("X-Rate-Limit-", StringComparison.OrdinalIgnoreCase) && !h.Key.EndsWith("-State", StringComparison.OrdinalIgnoreCase)))
+        {
+            if (!response.Headers.TryGetValues(header.Key + "-State", out var states)) continue;
+            var rules = string.Join(",",header.Value).Split(',');
+            var counters = string.Join(",",states).Split(',');
+            if (rules.Length != counters.Length) return Cooldown(response,now,fallback);
+            for (int i=0;i<rules.Length;i++)
+            {
+                var r=rules[i].Split(':'); var c=counters[i].Split(':');
+                if (r.Length!=3 || c.Length!=3 || !int.TryParse(r[0],out var limit) || limit<=0 || !int.TryParse(r[1],out var window) || window<=0 || !int.TryParse(r[2],out var penalty) || penalty<0 || !int.TryParse(c[0],out var used) || used<0 || !int.TryParse(c[1],out var stateWindow) || stateWindow!=window || !int.TryParse(c[2],out var ban) || ban<0)
+                    return Cooldown(response,now,fallback);
+                hasBudget=true;
+            }
+        }
+        return Cooldown(response,now,hasBudget ? now : fallback);
     }
     public static DateTimeOffset Cooldown(HttpResponseMessage response, DateTimeOffset now, DateTimeOffset minimum)
     {
@@ -199,7 +219,8 @@ public sealed class LiveTradeClient(HttpClient http)
             var range = new Dictionary<string, decimal>();
             if (first.Minimum.HasValue) range["min"] = first.Minimum.Value;
             if (first.Maximum.HasValue) range["max"] = first.Maximum.Value;
-            if (first.Kind == "Property")
+            bool grantedSkill = first.Text.StartsWith("Grants Skill:", StringComparison.Ordinal);
+            if (first.Kind == "Property" && !grantedSkill)
             {
                 // Multi-component properties are checked against returned item text, not an averaged server stat.
                 var name = first.Text.Split(':')[0];
@@ -221,7 +242,7 @@ public sealed class LiveTradeClient(HttpClient http)
                 }
                 continue;
             }
-            string kind = first.Kind switch { "Pseudo" => "pseudo", "Implicit" => "implicit", "Rune" => "rune", "Enchant" => "enchant", _ => "explicit" };
+            string kind = grantedSkill ? "skill" : first.Kind switch { "Pseudo" => "pseudo", "Implicit" => "implicit", "Rune" => "rune", "Enchant" => "enchant", _ => "explicit" };
             var candidates = catalog?.GetProperty("result").EnumerateArray().SelectMany(x => x.GetProperty("entries").EnumerateArray())
                 .Where(x => ReadText(x.GetProperty("id"), "stats.entries.id").StartsWith(kind + ".", StringComparison.Ordinal) && !x.TryGetProperty("option", out _) && Signature(ReadText(x.GetProperty("text"), "stats.entries.text")) == Signature(first.Text))
                 .Select(x => ReadText(x.GetProperty("id"), "stats.entries.id")).Distinct().ToArray() ?? [];

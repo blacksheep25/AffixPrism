@@ -67,6 +67,15 @@ public partial class MainWindow
         view.Height=440; view.UpdateLayout();
         Capture("artifacts/showcase/quest-item.png",view);
         if(view.CheckPricesButton.Content?.ToString()!="Open quest item wiki" || view.EstimatePanel.Visibility!=System.Windows.Visibility.Collapsed || view.EquipmentFilters.Visibility!=System.Windows.Visibility.Collapsed) throw new Exception("Quest view retained pricing controls");
+        view.SetItem(ItemParser.Parse("Item Class: Charms\nRarity: Unique\nSanguis Heroum\nStaunching Charm\n--------\nRequires: Level 18\n--------\nUsed when you start Bleeding\nCreates Consecrated Ground on use\n--------\nFoil Unique"),"Demo");
+        view.ResizeToItemContent(); view.UpdateLayout(); Capture("artifacts/showcase/foil-item.png",view);
+        view.SetItem(ItemParser.Parse("Item Class: Stackable Currency\nRarity: Currency\nExalted Orb\n--------\nStack Size: 17/20\n--------\nAugments a Rare item with a new random modifier"),"Demo");
+        view.SetQuote("Loading exchange market price…");
+        view.SetExchange(new EconomySnapshot(new[] { new EconomyRow("Exalted Orb","","",1m/306m,"Divine Orb",null,null) { ChangePercent=-73.3m,History=new decimal?[]{0,-40,-42,-44,-65,-71,-73.3m} } },time,false,false,"Demo data"));
+        view.ResizeToItemContent(); view.UpdateLayout();
+        Capture("artifacts/showcase/currency-check.png",view);
+        if(view.BodyScroll.ScrollableHeight>1 || view.Height>300 || view.EstimatePanel.Visibility!=System.Windows.Visibility.Collapsed || view.CurrencyStock.Text!="Stock: 17" || view.ItemRows.Visibility!=System.Windows.Visibility.Collapsed) throw new Exception($"Currency check is not compact: height {view.Height}, scroll {view.BodyScroll.ScrollableHeight}, estimate {view.EstimatePanel.Visibility}, stock {view.CurrencyStock.Text}, rows {view.ItemRows.Visibility}");
+        Capture("artifacts/showcase/currency-check.png",view);
         view.SetItem(item,"Demo");
         if(view.EstimatePanel.Visibility!=System.Windows.Visibility.Visible || view.EquipmentFilters.Visibility!=System.Windows.Visibility.Visible) throw new Exception("Equipment controls did not return after quest inspection");
         view.Close();

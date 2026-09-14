@@ -59,6 +59,7 @@ public sealed class ItemPreviewCard : Border
         BorderBrush = Color(49,46,32);
         var stack = new StackPanel();
         TextBlock Text(string text, Brush brush, double size = 13) => new() { Text = text, Foreground = brush, FontFamily = new FontFamily("Georgia"), FontSize = size, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(2,3,2,3) };
+        if (FoilVisual.IsFoil(Item)) rarity = FoilVisual.Rainbow();
         var header = new StackPanel(); header.Children.Add(Text(Item.Name, rarity, 17));
         if (gem) header.Children.Add(Text(Item.ItemClass.Contains("Support",StringComparison.OrdinalIgnoreCase) || Item.Details.Contains("Support,") ? "Support" : "Skill Gem",rarity,15));
         else if (Item.BaseType != Item.Name) header.Children.Add(Text(Item.BaseType, rarity, 15));
@@ -68,7 +69,9 @@ public sealed class ItemPreviewCard : Border
         var flourish = "M 2 0 C 18 0 18 12 7 12 C 0 12 0 20 14 20 M 8 3 L 15 10 L 8 17";
         nameplate.Children.Add(new System.Windows.Shapes.Path { Data=Geometry.Parse(flourish),Stroke=rarity,StrokeThickness=1,Width=18,Height=22,VerticalAlignment=VerticalAlignment.Center,HorizontalAlignment=HorizontalAlignment.Left,IsHitTestVisible=false });
         nameplate.Children.Add(new System.Windows.Shapes.Path { Data=Geometry.Parse(flourish),Stroke=rarity,StrokeThickness=1,Width=18,Height=22,VerticalAlignment=VerticalAlignment.Center,HorizontalAlignment=HorizontalAlignment.Right,RenderTransform=new ScaleTransform(-1,1,9,11),IsHitTestVisible=false });
-        stack.Children.Add(new Border { Background = Color(25,23,15), BorderBrush = rarity, BorderThickness = new Thickness(1), CornerRadius=new CornerRadius(2), Padding = new Thickness(4), Child = nameplate });
+        var titleFrame = new Border { Background = Color(25,23,15), BorderBrush = rarity, BorderThickness = new Thickness(1), CornerRadius=new CornerRadius(2), Padding = new Thickness(4), Child = nameplate };
+        if (FoilVisual.IsFoil(Item)) FoilVisual.Frame(titleFrame);
+        stack.Children.Add(titleFrame);
         stack.Children.Add(new RemoteItemIcon { Url = IconUrl, Height = 44, MaxWidth = 44, Stretch = Stretch.Uniform, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0,8,0,4) });
         stack.Children.Add(new SocketStrip { Item = Item });
         string? previous = null;

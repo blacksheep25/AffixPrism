@@ -12,6 +12,8 @@ public static class ItemSockets
         var runes = ItemAnalysis.From(item).Lines.Where(l=>l.Kind == "Rune").ToArray();
         if(runes.Length==0)
             return Enumerable.Range(0,Math.Min(count,12)).Select(i=>new ItemSocket(i,"rune",null,null,false,"No socket effects in copied item text.",true)).ToArray();
+        if(runes.Length!=count && SocketAugments.MatchGroups(item.ItemClass,runes.Select(r=>r.Text).ToArray(),count) is { } groups)
+            return groups.Select((g,i)=>new ItemSocket(i,"rune",g.Name,null,true,g.Details+"\n\nMatched as a group of socket effects; socket order is not confirmed.",true)).ToArray();
         // Clipboard effects can be totals across sockets, not one line per socket.
         if (count == 2 && runes.Length == 1 && runes[0].Text == "36% increased Armour, Evasion and Energy Shield")
             return Enumerable.Range(0, 2).Select(i => new ItemSocket(i, "rune", "Iron Rune family", null, true,

@@ -2,7 +2,7 @@
 
 A Windows companion for **Path of Exile 2**. Press **Alt+E** to inspect an item, find comparable offers, adjust search filters and compare seller items beside your own.
 
-**[Download v0.4.0-beta.7](https://github.com/blacksheep25/ExileLens/releases/tag/v0.4.0-beta.7)** · Windows 10/11 x64 · MIT
+**[Download v0.4.0-beta.8](https://github.com/blacksheep25/ExileLens/releases/tag/v0.4.0-beta.8)** · Windows 10/11 x64 · MIT
 
 
 ![Item evaluation](docs/screenshots/price-check.png)
@@ -23,6 +23,9 @@ A Windows companion for **Path of Exile 2**. Press **Alt+E** to inspect an item,
 ## Market dashboard and in-game tools
 
 - **Market Prices:** searchable categories, favourites, highest-price-first sorting, history tooltips and automatic refresh every five minutes while visible.
+- **Compact currency checks:** stock, exchange ratios and seven-day trends in a compact window; hover for unit and stack values.
+- **Item presentation:** light-blue anoints, violet implicit modifiers, multi-line socket augment recognition and rainbow headers for items marked Foil Unique.
+- **Trade filtering and pacing:** granted skill levels are filtered before pagination; available server rate-limit budgets allow immediate page fetches, with cooldowns respected.
 - **Readable currencies:** sub-Divine prices use Exalted Orbs when fresh rates are available. Exchange unit and stack prices keep the same currency; hover for source-price equivalents.
 - **Rune Helper:** select a choice-name region and start local English OCR to display indicative prices beside recognised choices while POE2 is foreground.
 - **Encounters and sessions:** encounter reward information, area history from Client.txt and optional manual loot recording.
@@ -85,3 +88,7 @@ English item text only. Character profiles are manually configured locally; acco
 - [Release and validation process](docs/RELEASING.md)
 
 Licensed under [MIT](LICENSE). See [third-party notices](THIRD_PARTY.md) for dependencies and data attribution. Path of Exile and its artwork belong to Grinding Gear Games; ExileLens is an independent community project.
+
+### Currency checks
+
+![Compact currency check with illustrative demo prices](docs/screenshots/currency-check.png)

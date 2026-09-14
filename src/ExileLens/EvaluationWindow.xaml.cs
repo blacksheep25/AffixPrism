@@ -35,6 +35,7 @@ public partial class EvaluationWindow : Window
     public event Action? ImportRequested;
     public event Action? PinRequested;
     public event Action? ComparePinnedRequested;
+    private Brush? ordinaryHeaderBackground;
     private sealed record ViewPreferences(int Currency, int Status, int Age, bool Broad, bool ListingsExpanded = true);
     private static string PreferencesPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ExileLens", "evaluation-ui.json");
     public EvaluationWindow(bool smoke = false)
@@ -99,6 +100,7 @@ public partial class EvaluationWindow : Window
         ResultStatus.Text = "Select filters, then check prices";
         DesecratedHeader.Visibility = Visibility.Collapsed;
         if (value == null) { building = false; ResetFilterUndo(); return; }
+        ConfigureCurrencyCard();
         bool quest=ItemPresentation.IsQuest(value);
         ItemFrame.Height=quest ? 48 : double.NaN;
         EstimatePanel.Visibility=quest ? Visibility.Collapsed : Visibility.Visible;
@@ -121,8 +123,12 @@ public partial class EvaluationWindow : Window
         if (gem) rarity = new SolidColorBrush(Color.FromRgb(108,201,195));
         if(quest) { rarity=new SolidColorBrush(Color.FromRgb(74,230,58)); Caption.Text="Exile Lens · Inspect quest item"; }
         DesecratedHeader.Visibility = analysis.Desecrated ? Visibility.Visible : Visibility.Collapsed;
+        ordinaryHeaderBackground ??= ItemFrame.Background;
+        ItemFrame.Background = ordinaryHeaderBackground; ItemFrame.BorderThickness = new Thickness(1,2,1,2);
+        if (FoilVisual.IsFoil(value)) rarity = FoilVisual.Rainbow();
         ItemTitle.Foreground = rarity; ItemBase.Foreground = rarity; ItemFrame.BorderBrush = rarity;
         ItemTitle.Text = value.Name.ToUpperInvariant(); ItemBase.Text = gem ? (value.ItemClass.Contains("Support",StringComparison.OrdinalIgnoreCase) || value.Details.Contains("Support,") ? "Support" : "Skill Gem") : ItemBase.Text.ToUpperInvariant();
+        if (FoilVisual.IsFoil(value)) FoilVisual.Frame(ItemFrame);
         BodyScroll.ScrollToTop();
         string? previousKind = null;
         if(quest) ItemRows.Children.Add(new TextBlock { Text="Quest Item",Foreground=new SolidColorBrush(Color.FromRgb(150,150,142)),TextAlignment=TextAlignment.Center,FontFamily=new FontFamily("Georgia"),FontSize=16,Margin=new Thickness(0,8,0,8) });
@@ -204,6 +210,7 @@ public partial class EvaluationWindow : Window
                 if (rowToggles.TryGetValue(group.Key, out var toggle)) toggle();
         }
         RestoreDraft();
+        ConfigureCurrencyCard();
         building = false;
         ResetFilterUndo();
         if (!savedDrafts.ContainsKey(DraftKey) && profiles.FirstOrDefault(p=>p.Name==activeProfile && p.ItemClass.Equals(value.ItemClass,StringComparison.OrdinalIgnoreCase)) is { } profile)
@@ -268,6 +275,7 @@ public partial class EvaluationWindow : Window
 
     public void SetQuote(string status, System.Collections.Generic.IReadOnlyList<EconomyRow>? rows = null)
     {
+        if (CompactCurrency) CurrencyStatus(status);
         Estimate.ToolTip = null;
         currentQueryUrl=null; OpenQueryButton.Visibility=Visibility.Collapsed;
         averageListing = null; AverageCompare.Visibility = Visibility.Collapsed; ExchangePanel.Visibility = Visibility.Collapsed;
@@ -283,6 +291,7 @@ public partial class EvaluationWindow : Window
         if (item == null) return;
         var matches = Economy.Matching(snapshot.Rows,item).Where(r => r.Value > 0).ToArray();
         if (matches.Length == 0) { ExchangePanel.Visibility = Visibility.Collapsed; return; }
+        if (CompactCurrency) { RenderCurrencyQuote(snapshot,rates,matches[0]); ExchangePanel.Visibility=Visibility.Collapsed; EstimatePanel.Visibility=Visibility.Collapsed; return; }
         ExchangePanel.Header = "Exchange market price";
         ExchangePanel.Visibility = Visibility.Visible;
         var quantity = System.Text.RegularExpressions.Regex.Match(item.Details, @"Stack Size: ([\d,]+)");
@@ -371,6 +380,7 @@ public partial class EvaluationWindow : Window
     }
     public void SetComparableResult(ComparableResult result)
     {
+
         Estimate.ToolTip = null;
         SocketStrip.Observe(result.Rows.SelectMany(r=>r.Item.Sockets ?? Array.Empty<ItemSocket>()));
         currentQueryUrl=result.SearchUrl; OpenQueryButton.Visibility=currentQueryUrl==null ? Visibility.Collapsed : Visibility.Visible;
@@ -641,6 +651,7 @@ public partial class EvaluationWindow : Window
         // A remembered manual height must never truncate the next item's stats.
         // Keep the chosen width, then give the item priority over the listings pane.
         if (!IsTestMode) FitToScreen(false);
+        if (CompactCurrency) { MinHeight=240; UpdateLayout(); var currencyBody=(FrameworkElement)BodyScroll.Content; currencyBody.Measure(new Size(Math.Max(1,BodyScroll.ActualWidth),double.PositiveInfinity)); Height=Math.Max(240,currencyBody.DesiredSize.Height+102); return; }
         ListingsScroll.MaxHeight = 200;
         UpdateLayout();
         var content = (FrameworkElement)BodyScroll.Content;

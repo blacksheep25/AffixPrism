@@ -6,6 +6,13 @@ static class LiveTradeChecks
 {
     public static async Task Run(Action<bool, string> check)
     {
+        var staff=ItemParser.Parse("Item Class: Staves\nRarity: Magic\nAzure Chiming Staff of the Skilled\nChiming Staff\n--------\nItem Level: 81\nGrants Skill: Level 20 Sigil of Power\n--------\n+62 to maximum Mana\n30% reduced Attribute Requirements")!;
+        var staffRequest=new ComparableRequest(staff,"Test League","Auto",new[]{new PriceConstraint("Item Level: 81",81,null,Kind:"Property"),new PriceConstraint("Grants Skill: Level 20 Sigil of Power",20,null,Kind:"Property")},false,false,null);
+        using var staffCatalog=JsonDocument.Parse("""{"result":[{"entries":[{"id":"skill.sigil_of_power","text":"Grants Skill: Level # Sigil of Power"}]}]}""");
+        using var staffQuery=JsonDocument.Parse(LiveTradeClient.BuildQuery(staffRequest,staffCatalog.RootElement));
+        var staffStat=staffQuery.RootElement.GetProperty("query").GetProperty("stats")[0].GetProperty("filters")[0];
+        check(staffStat.GetProperty("id").GetString()=="skill.sigil_of_power" && staffStat.GetProperty("value").GetProperty("min").GetInt32()==20,"Granted skill level is filtered on the server before pagination");
+        check(staffQuery.RootElement.GetProperty("query").GetProperty("filters").GetProperty("type_filters").GetProperty("filters").GetProperty("ilvl").GetProperty("min").GetInt32()==81,"Granted skill search retains selected item level");
         var unidentified = ItemParser.Parse("Item Class: Body Armours\nRarity: Unique\nPilgrim Vestments\n--------\nArmour: 25\nEnergy Shield: 16\n--------\nItem Level: 75\n--------\nUnidentified")!;
         var unidRequest = new ComparableRequest(unidentified,"Test League","Exalted Orb",Array.Empty<PriceConstraint>(),false,false,null);
         var unidQuery = JsonDocument.Parse(LiveTradeClient.BuildQuery(unidRequest,null)).RootElement.GetProperty("query");
@@ -111,6 +118,16 @@ static class LiveTradeChecks
         throttled.Headers.TryAddWithoutValidation("X-Rate-Limit-Ip-State", "5:10:180,8:60:0");
         var now = DateTimeOffset.UtcNow;
         check(LiveTradeClient.Cooldown(throttled, now, now) == now.AddSeconds(180), "Live cooldown respects the longer server ban over Retry-After");
+        using var budget=new HttpResponseMessage(HttpStatusCode.OK);
+        budget.Headers.TryAddWithoutValidation("X-Rate-Limit-Ip","15:4:60,30:60:300");
+        budget.Headers.TryAddWithoutValidation("X-Rate-Limit-Ip-State","1:4:0,3:60:0");
+        check(LiveTradeClient.NextRequest(budget,now,now.AddSeconds(4))==now,"Available server budget removes artificial page delay");
+        budget.Headers.Remove("X-Rate-Limit-Ip-State");
+        budget.Headers.TryAddWithoutValidation("X-Rate-Limit-Ip-State","15:4:0,3:60:0");
+        check(LiveTradeClient.NextRequest(budget,now,now)==now.AddSeconds(4),"Exhausted fetch budget still waits for the server window");
+        using var noBudget=new HttpResponseMessage(HttpStatusCode.OK);
+        check(LiveTradeClient.NextRequest(noBudget,now,now.AddSeconds(4))==now.AddSeconds(4),"Missing server headers retain fallback spacing");
+        check(LiveTradeClient.NextRequest(throttled,now,now.AddSeconds(4))==now.AddSeconds(180),"Adaptive pacing preserves server bans and Retry-After");
         using var handler = new TradeHandler(catalog.GetRawText(), fetched);
         var client = new LiveTradeClient(new HttpClient(handler));
         var elapsed = System.Diagnostics.Stopwatch.StartNew();

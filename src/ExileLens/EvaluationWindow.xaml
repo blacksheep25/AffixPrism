@@ -20,10 +20,10 @@
    </Grid>
    <TextBlock x:Name="QolStatus" TextWrapping="Wrap" FontSize="10" Foreground="#C9B785"/>
    <Border x:Name="MapWarnings" Visibility="Collapsed" BorderBrush="#D39C54" BorderThickness="1" Padding="8" Margin="0,6" Background="#332315"><TextBlock x:Name="WarningText" Foreground="#FFD493" TextWrapping="Wrap"/></Border>
-   <local:RemoteItemIcon x:Name="ItemHeaderArt" Width="80" Height="80" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,6,0,6" ToolTip="Item artwork"/><local:SocketStrip x:Name="ItemSocketsView"/><StackPanel x:Name="ItemRows"/><Button x:Name="HiddenModsButton" Content="Show hidden mods" Click="ToggleHiddenMods" HorizontalAlignment="Left" Padding="8,4" Margin="0,6"/></StackPanel></Border>
+   <TextBlock x:Name="CurrencyStock" Visibility="Collapsed" TextAlignment="Center" Margin="0,2,0,8"/><local:RemoteItemIcon x:Name="ItemHeaderArt" Width="80" Height="80" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,6,0,6" ToolTip="Item artwork"/><local:SocketStrip x:Name="ItemSocketsView"/><StackPanel x:Name="ItemRows"/><Button x:Name="HiddenModsButton" Content="Show hidden mods" Click="ToggleHiddenMods" HorizontalAlignment="Left" Padding="8,4" Margin="0,6"/></StackPanel></Border>
 
 
-<Expander x:Name="ExchangePanel" Header="Currency exchange" Visibility="Collapsed" IsExpanded="True" Foreground="#BFA56D" Margin="0,10"><TextBlock x:Name="ExchangeInfo" TextWrapping="Wrap" Foreground="#D9D2BC"/></Expander>
+<StackPanel x:Name="CurrencyQuote" Visibility="Collapsed" Background="#191914" Margin="0,6"/><Expander x:Name="ExchangePanel" Header="Currency exchange" Visibility="Collapsed" IsExpanded="True" Foreground="#BFA56D" Margin="0,10"><TextBlock x:Name="ExchangeInfo" TextWrapping="Wrap" Foreground="#D9D2BC"/></Expander>
 
 
  </StackPanel></ScrollViewer>

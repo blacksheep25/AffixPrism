@@ -276,7 +276,7 @@ var lineage = ItemParser.Parse("Item Class: Support Gems\nRarity: Gem\nTacati's 
 var lineageLines = ItemAnalysis.From(lineage).Lines;
 Check(ItemPresentation.IsGem(lineage) && lineageLines.Any(l=>l.Kind == "Gem description") && lineageLines.Count(l=>l.Kind == "Flavour") == 3 && lineageLines.Last().Kind == "Instructions", "lineage gem sections retain their presentation roles");
 Check(lineageLines.Single(l=>l.Text.StartsWith("Poisons from")).Kind == "Item text", "lineage effect remains a modifier");
-Check(ItemMetadata.Style(new ItemLine("+6 to all Attributes","Implicit")).Colour == "#B4B1A5", "ordinary implicits use neutral grey");
+Check(ItemMetadata.Style(new ItemLine("+6 to all Attributes","Implicit")).Colour == "#A3A4F2", "ordinary implicits use in-game violet");
 Check(ItemMetadata.Type(new ItemLine("+100 to maximum Life","Item text","Unique Modifier")) == "Explicit", "unique modifier metadata retains explicit colouring");
 
 var socketFixture = JsonDocument.Parse("""{"sockets":[{"type":"rune"},{"type":"rune"}],"socketedItems":[{"socket":1,"name":"Iron Rune","socketedIcon":"https://web.poecdn.com/test.png"}]}""");
@@ -431,6 +431,11 @@ var generalRing=ComparisonOverview.Create(ventor,ventorOther,"General");
 Check(generalRing.Stats.Count==5 && generalRing.Stats.Any(s=>s.Name.Contains("Spirit") && s.Direction<0),"General ring overview includes spirit and all numeric modifiers");
 Check(generalRing.Stats.Count(s=>s.Name.Contains("Rarity"))==2,"General comparison keeps implicit and explicit rarity separate");
 Check(generalRing.Stats.Any(s=>s.Yours==-11 && s.Other==35 && s.Direction>0) && generalRing.Verdict.StartsWith("Trade-off"),"General comparison preserves negative resistances and mixed outcomes");
+var foundationItem=ItemParser.Parse("Item Class: Body Armours\nRarity: Unique\nForgotten Warden\nPrimal Markings\n--------\nSockets: S S S\n--------\n+30 to Armour (rune)\n+30 to Evasion Rating (rune)\n+10 to maximum Energy Shield (rune)\n12% increased Rarity of Items found (rune)\nSkills have 10% chance to not remove Charges but still count as consuming them (rune)")!;
+var foundationSockets=ItemSockets.From(foundationItem);
+Check(foundationSockets.Count==3 && foundationSockets.Select(s=>s.Name).Order().SequenceEqual(new[]{"Idol of Eramir","Rabbit Idol","Rune of Foundations"}.Order()),"Multi-line Foundations effect resolves three socket identities");
+Check(foundationSockets.All(s=>new SocketArtworkCatalog().Resolve(s).IconUrl!=null && s.Inferred),"Grouped sockets have artwork and remain labelled inferred");
+Check(SocketAugments.MatchGroups("Body Armours",new[]{"+30 to Armour","+30 to Evasion Rating"},1)==null,"Incomplete multi-line rune is not falsely identified");
 var runeCatalog = new[] { new EconomyRow("Greater Iron Rune","","",5,"Exalted Orb",null,null),new EconomyRow("Perfect Iron Rune","","",50,"Exalted Orb",null,null),new EconomyRow("Iron Rune","","",1,"Exalted Orb",null,null), new EconomyRow("Countess Seske's Rune of Archery","","",80,"Exalted Orb",null,null) };
 Check(RuneNames.Match("GREATER IRON RUNE",90,runeCatalog)?.Row.Value == 5, "Rune OCR exact names preserve tier");
 Check(RuneNames.Match("2x Greater Iron Rune",90,runeCatalog)?.PriceLabel.Contains("10 Exalted") == true, "Rune choices include stack total");
