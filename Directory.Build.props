@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <Version>0.4.0-beta.9</Version>
+    <Version>0.4.0-beta.10</Version>
     <PathMap>$(MSBuildThisFileDirectory)=/_/AffixPrism/</PathMap>
     <Authors>AffixPrism contributors</Authors>
     <RepositoryUrl>https://github.com/blacksheep25/AffixPrism</RepositoryUrl>

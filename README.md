@@ -4,7 +4,7 @@
 
 A Windows companion for **Path of Exile 2**. Press **Alt+E** to inspect an item, find comparable offers, adjust search filters and compare seller items beside your own.
 
-**[Download v0.4.0-beta.9](https://github.com/blacksheep25/AffixPrism/releases/tag/v0.4.0-beta.9)** · Windows 10/11 x64 · MIT
+**[Download v0.4.0-beta.10](https://github.com/blacksheep25/AffixPrism/releases/tag/v0.4.0-beta.10)** · Windows 10/11 x64 · MIT
 
 
 ![Item evaluation](docs/screenshots/price-check.png)
